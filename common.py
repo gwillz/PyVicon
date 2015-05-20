@@ -3,12 +3,14 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.3.5
+# version 0.5.13
 #
-# common routines for get_vicon.py
+# Common routines for get_vicon.py
+# Sleeper and ViconSocket classes
 #
 
-import time, sys, os, errno, ConfigParser
+import time, sys, os, errno, ConfigParser, socket
+from serial import Serial
 
 # Prints a notice if the exit reason was unclean.
 def quit(ret_code):
@@ -61,15 +63,47 @@ def load_cfg(path):
         quit(1)
     return settings
 
+# Returns a current working directory 
+# that has the correct file separator
+def win_cwd(end="/"):
+    return os.getcwd().replace("\\", "/") + end
+
+# Test the directory existence, otherwise create it
 def check_directory(path):
     try:
-        cwd = os.getcwd().replace("\\", "/") + "/"
-        os.makedirs(cwd + path)
+        os.makedirs(win_cwd() + path)
     except OSError as ex:
         if ex.errno != errno.EEXIST:
             print "Cannot create data directory!"
             quit(1)
-
+            
+# -- ViconSocket
+# Wraps the socket object and provides default values
+# returns an array of strings for use in writing CSV rows
+# 
+class ViconSocket():
+    def __init__(self, address, port=802, buffer=1024, split=" "):
+        self._address = address
+        self._port = port
+        self._buffer = buffer
+        self._split = split
+        self._open = False
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        #self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        
+    def open(self):
+        if not self._open:
+            self._sock.connect((self._address, self._port))
+        else:
+            print "Vicon socket already open"
+            
+    def get(self, command, object):
+        self._sock.send(command + " " + object)
+        return self._sock.recv(self._buffer).split(self._split)
+        
+    def close(self):
+        self._sock.close()
+        
 # -- Sleeper
 # This sleeper object will sleep _until_ the next timestamp is due
 # This way there is no timestamp discrepencies when performing 
@@ -82,9 +116,8 @@ def check_directory(path):
 #       %% do stuff %%
 #       print sleeper.getStamp()
 #       sleeper.sleep()
-#   
-
-class Sleeper:
+# 
+class Sleeper():
     # sleeptime: time to sleep until releasing the thread
     # resolution: time between comparing the stamps
     # epoch: time that the loop starts, the first time stamp() is called
@@ -94,7 +127,11 @@ class Sleeper:
         self._epoch = 0.0
     
     # sleep until next timestamp
-    def sleep(self):
+    # will print err variable if called after the timestamp is due
+    def sleep(self, err="The loop is late!\n"):
+        if time.time() > self._stamp + self._sleeptime:
+            sys.stdout.write(err)
+            return
         while time.time() < self._stamp + self._sleeptime:
             time.sleep(self._resolution)
     

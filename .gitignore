@@ -1,4 +1,5 @@
 #python stuff
 
 *.pyc
+/data/*.csv
 
