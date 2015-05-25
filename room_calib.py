@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.1.2
+version =  "0.1.4"
 #
 # Grabs Vicon data, records room calibration on a flash
 #
@@ -57,13 +57,11 @@ try:
 except OSError:
     print "Couldn't open serial device", SERIAL_DEV
     quit(1)
-else:
-    print "Not listening to serial"
 
 # print status
 print ""
 print "Using config:", CONFIG
-print "Waiting for flash...",
+sys.stdout.write("Waiting for flash... ")
 sys.stdout.flush() #linux tweaks
 
 # open CSV file
@@ -76,6 +74,7 @@ with open(OUTFILE, 'w') as xmlfile:
     #open xml file
     w = XMLWriter(xmlfile)
     doc = w.start("ViconCalib")
+    w.element("version", at=str(version))
     
     #wait for flash
     while True:
