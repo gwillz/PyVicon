@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.1
+# version 0.1.2
 #
 # Grabs Vicon data, records room calibration on a flash
 #
@@ -74,7 +74,7 @@ with open(OUTFILE, 'w') as xmlfile:
     client.open()
     
     #open xml file
-    w = Writer(xmlfile)
+    w = XMLWriter(xmlfile)
     doc = w.start("ViconCalib")
     
     #wait for flash
@@ -88,8 +88,8 @@ with open(OUTFILE, 'w') as xmlfile:
         
             # write data
             if len(r) > 0 and len(t) > 0:
-                w.element("timestamp", at=sleeper.getStamp())
-                w.element("roomOrigin", x=r[0], y=r[1], z=r[2], pitch=t[0], yaw=t[1], roll=t[2])
+                w.element("timestamp", at=str(sleeper.getStamp()))
+                w.element("roomOrigin", x=t[0], y=t[1], z=t[2], rx=r[0], ry=r[1], rz=r[2])
                 print "got it!"
                 break
             

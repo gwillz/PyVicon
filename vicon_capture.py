@@ -8,7 +8,7 @@
 # Retrieves Vicon data directly via TCP sockets.
 # Includes syncronized timestamp data via a R232 COM port.
 #
-# usage: python2 get_vicon.py <object name> {--time <in minutes> | --config <file>}
+# usage: python2 vicon_capture.py <object name> {--time <in minutes> | --config <file>}
 #
 
 from common import *
@@ -17,7 +17,7 @@ from datetime import datetime
 import csv, sys
 
 # args sanity check
-args_check("python2 get_vicon.py <object name> \
+args_check("python2 vicon_capture.py <object name> \
             {--time <in minutes> | --config <file>}")
 
 # set arguments
