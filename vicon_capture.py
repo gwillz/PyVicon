@@ -11,9 +11,11 @@
 # usage: python2 vicon_capture.py <object name> {--time <in minutes> | --config <file>}
 #
 
-from common import *
+from eagleeye import ViconSocket, Sleeper
+from eagleeye.common import *
 from subprocess import *
 from datetime import datetime
+from serial import Serial
 import csv, sys
 
 # args sanity check

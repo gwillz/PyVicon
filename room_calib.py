@@ -10,10 +10,12 @@ version =  "0.1.4"
 # usage: python2 room_calib.py <object name> {--config <file>}
 #
 
-from common import *
+from eagleeye import ViconSocket, Sleeper
+from eagleeye.common import *
 from subprocess import *
 from datetime import datetime
 from elementtree.SimpleXMLWriter import XMLWriter
+from serial import Serial
 import csv, sys
 
 # args sanity check
