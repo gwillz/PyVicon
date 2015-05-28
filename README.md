@@ -1,6 +1,6 @@
-== README - Capture Tool
+## README - Capture Tool
 
-=== Overview
+### Overview
 This software records raw Vicon data into CSV files. The CSV files include 
 timestamps and flash sync.
 
@@ -8,11 +8,11 @@ The software is intended to be run a system running the Vicon Tracker software.
 This may require administrative priviledges to install support libraries or 
 driver software.
 
-=== Legal
+### Legal
 * The CRAPL License
 * http://matt.might.net/articles/crapl/CRAPL-LICENSE.txt
 
-=== Prerequisites
+### Prerequisites
 * Windows 7+
 * Python 2.7
 * Vicon Tracker System (tested with v1.4)
@@ -20,29 +20,29 @@ driver software.
 * Flash Sync circuit
 * A camera flash w/ PC-SYNC connection
 
-=== Flash Sync Circuit
+### Flash Sync Circuit
 This is a circuit by design of Peter Barsznica that triggers a camera flash and 
 an identifier in the software, in order to syncronise the video and data feeds.
 
 This is the circuit detail:
->> image here
+* image here
 
 The circuit just connect to the serial GND and CTS pins:
->> image here
+* image here
 
-=== Configuration
->> config file description
+### Configuration
+config file description
 * config file properties
 
-=== Preparation
+### Preparation
 * Vicon objects
 * configure
 * .bat files
 
-=== Room Calibration
+### Room Calibration
 * 
 
-=== Data Capture
+### Data Capture
 * 
 
 
