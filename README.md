@@ -15,7 +15,7 @@ driver software.
 ### Prerequisites
 * Windows 7+
 * Python 2.7
-* Vicon Tracker System (tested with v1.4)
+* Vicon Tracker System (tested with v1.2)
 * Serial RS232 Serial connection
 * Flash Sync circuit
 * A camera flash w/ PC-SYNC connection
@@ -25,14 +25,30 @@ This is a circuit by design of Peter Barsznica that triggers a camera flash and
 an identifier in the software, in order to syncronise the video and data feeds.
 
 This is the circuit detail:
-* image here
+
+[Circuit Sync](assets/sync_circuit.png)
 
 The circuit just connect to the serial GND and CTS pins:
 * image here
 
+A list of available serial ports can be found with:
+```
+python2 -m serial.tools.list_ports
+```
+
 ### Configuration
 config file description
-* config file properties
+
+| Setting          | Default       |
+| ---------------- | ------------- |
+| ip_address       | 127.0.0.1     |
+| port             | 802           |
+| date_format      | Y-%m-%d_%H-%M |
+| framerate        | 30            |
+| output_folder    | data          |
+| output_delimiter | ,             |
+| serial_device    | COM4          |
+| run_serial       | True          |
 
 ### Preparation
 * Vicon objects
