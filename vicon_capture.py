@@ -3,9 +3,9 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.5.13
+# version 0.6.13
 #
-# Retrieves Vicon data directly via TCP sockets.
+# Retrieves Vicon data via TCP sockets.
 # Includes syncronized timestamp data via a R232 COM port.
 #
 # usage: python2 vicon_capture.py <object name> {--time <in minutes> | --config <file>}
@@ -13,7 +13,6 @@
 
 from eagleeye import ViconSocket, Sleeper
 from eagleeye.common import *
-from subprocess import *
 from datetime import datetime
 from serial import Serial
 import csv, sys
@@ -30,7 +29,6 @@ settings = load_cfg(CONFIG)
 CFG_VAR = "settings"
 
 # config load
-SERVER_PATH = win_cwd() + settings.get(CFG_VAR, "server_path")
 IP_ADDR = settings.get(CFG_VAR, "ip_address")
 PORT = settings.get(CFG_VAR, "port")
 OUTFILE = win_cwd() + settings.get(CFG_VAR, "output_folder") + "/" + \
@@ -40,22 +38,12 @@ DELIMITER = settings.get(CFG_VAR, "output_delimiter")
 FRAMERATE = int(settings.get(CFG_VAR, "framerate")) # per second
 SERIAL_DEV = settings.get(CFG_VAR, "serial_device")
 DO_FLASH = settings.get(CFG_VAR, "run_serial") == "True"
-DO_SERVER = settings.get(CFG_VAR, "run_server") == "True"
 
 num_frames = TIME * 60 * FRAMERATE
 sleeper = Sleeper(1.0 / FRAMERATE)
 
 # data directory sanity check
 check_directory(settings.get(CFG_VAR, "output_folder"))
-
-# start the server
-if DO_SERVER:
-    server = Popen(SERVER_PATH, shell=True).returncode
-    if server > 0:
-        print "Couldn't start server"
-        quit(1)
-else:
-    print "Not starting local server"
 
 # start the serial listener
 if DO_FLASH:
@@ -72,6 +60,7 @@ print ""
 print "Using config:", CONFIG
 print "Running for", TIME, "minutes"
 print "Capturing at", FRAMERATE, "per second"
+print "Looking for", OBJECT
 print ""
 
 # open CSV file
