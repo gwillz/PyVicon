@@ -38,7 +38,7 @@ variables would need tweaking. The configuration file must contain all of the
 variables as specified in this [documentation here](#3-4-configuration-file). 
 
 A list of available serial ports can be found with this command:
-```batch
+```sh
 python2 -m serial.tools.list_ports
 ```
 
@@ -90,7 +90,7 @@ Thankfully, the Ricoh Theta can be remotely triggered via a smartphone.
 * A camera flash w/ PC-SYNC connection
 
 ### 3.2 Legal
-* The CRAPL License
+* The all-scientific CRAP License
 * http://matt.might.net/articles/crapl/CRAPL-LICENSE.txt
 
 ### 3.3 Flash Sync Circuit
@@ -122,16 +122,16 @@ contains and the corresponding defaults.
 | run_serial       | True          |
 
 ### 3.5 CSV Data Output
-| Row | Data      | Type  | Examples |
-| --- | --------- | ----- | -------- |
-| 0   | Timestamp | float | 0.144    |
-| 1   | Sync      | char  | F, L, .  |
-| 2   | X-axis    | float | 5121.54  |
-| 3   | Y-axis    | float | 1543.33  |
-| 4   | Z-axis    | float | 45.1431  |
-| 5   | X-rotate  | float | 0.1123   |
-| 6   | Y-rotate  | float | 0.2323   |
-| 7   | Z-rotate  | float | 2.1102   |
+| Column | Data      | Type  | Examples |
+| ------ | --------- | ----- | -------- |
+| 0      | Timestamp | float | 0.144    |
+| 1      | Sync      | char  | F, L, .  |
+| 2      | X-axis    | float | 5121.54  |
+| 3      | Y-axis    | float | 1543.33  |
+| 4      | Z-axis    | float | 45.1431  |
+| 5      | X-rotate  | float | 0.1123   |
+| 6      | Y-rotate  | float | 0.2323   |
+| 7      | Z-rotate  | float | 2.1102   |
 
 #### 3.5.1 Sync
 * . (dot) - is a regular frame
