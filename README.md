@@ -26,10 +26,11 @@ an identifier in the software, in order to syncronise the video and data feeds.
 
 This is the circuit detail:
 
-[Circuit Sync](assets/sync_circuit.png)
+![Circuit Sync](assets/sync_circuit_small.png)
 
-The circuit just connect to the serial GND and CTS pins:
-* image here
+The circuit connects to the serial GND and CTS pins:
+
+![Serial Pinout](assets/pinouts_serial.gif)
 
 A list of available serial ports can be found with:
 ```
