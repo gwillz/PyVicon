@@ -1,4 +1,4 @@
-# README - Capture Tool
+# Eagle Eye /// Capture Tool /// Documentation
 
 ## Overview
 This software records raw Vicon data into CSV files. The CSV files include 
@@ -9,15 +9,15 @@ install support libraries or driver software.
 #### Procedure
 The procedure is as follows:
 * Create physical objects
-* Prepare the camera, sync, Vicon tracker
-* Configure software accordingly
-* Calibrate the room
-* Capture data
+* [Prepare](#preparation) the camera, sync, Vicon tracker
+* [Configure](#configuration-file) software accordingly
+* [Calibrate](#room-calibration) the room
+* [Capture](#data-capture) data
 
 #### Outputs
-The software outputs two file types. 
-* An XML format from _run_calib.bat_ 
-* A CSV format from _run_capture.bat_. 
+The software outputs two file types.
+* A [CSV file](#csv-data-output) from _run_capture.bat_
+* An [XML file](#xml-data-output) from _run_calib.bat_
 
 ## Procedure
 ### Preparation
@@ -25,14 +25,33 @@ The software outputs two file types.
 The Vicon system captures objects that are defined as unique "constellations" 
 of dots placed on physical objects within the lab. These objects are configured 
 in the _Vicon Tracker v1.2_ software. Some experimental/working objects are 
-stored in the [objects](objects) folder.
+stored in the [objects](ojects) folder.
 
 Each object is given a name in Vicon, this name must be specified each time 
 this software is run. This is done in the batch executable files (.bat). Simply 
 right click to edit, double click to execute.
 
 #### Configuration file
-Most of these
+Most of these setting don't need to change. Different settings may apply to 
+different Vicon Systems. Typically only the _framerate_ or _serial_device_ 
+variables would need tweaking. The configuration file must contain all of the 
+variables as specified in this [documentation here](#configuration). 
+
+A list of available serial ports can be found with this command:
+```
+python2 -m serial.tools.list_ports
+```
+
+#### Syncronization
+The video file and Vicon data need to be syncronized. This is done with a 
+[sync circuit](#flash-sync-circuit). The circuit signals the software to create 
+a marker in the data and simultaneously triggers a camera flash to be seen in 
+the video.
+
+_IMPORTANT:_ a dataset can only contain two flashes. These two flashes represent 
+the start and end of a dataset. 
+The [Formatter Tool](http://git.gwillz.com.au/eagleeye/formattertool) 
+will ignore any data outside of these flashes.
 
 ### Room Calibration
 The 
@@ -65,11 +84,6 @@ The circuit connects to the serial GND and CTS pins:
 
 ![Serial Pinout](assets/pinouts_serial.gif)
 
-A list of available serial ports can be found with:
-```
-python2 -m serial.tools.list_ports
-```
-
 ### Configuration
 The configuration file (.cfg) specifies common settings that don't need to 
 change during a recording session or within a lab. These are the variables it 
@@ -100,13 +114,33 @@ contains and the corresponding defaults.
 
 #### Sync
 * . (dot) - is a regular frame
-* - F - is a flash frame, they may be sequential but must only appear twice within a dataset
-* - L - is a late frame, this means the data was not recieved before the next frame was due
+* - F - is a flash frame, they may be sequential but must only appear twice 
+within a dataset
+* - L - is a late frame, this means the data was not recieved before the next 
+frame was due
 
 #### Notes
 * The timestamp is 0 (zero) on the first frame
-* The X, Y, Z rotational data corresponds to pitch, yaw, roll (which is which is unknown)
+* The X, Y, Z rotational data corresponds to pitch, yaw, roll (which is which 
+is unknown)
 
 ### XML Data Output
-* TODO
+```xml
+<?xml version="1.0"?>
+<ViconCalib>
+  <timestamp at="1.4960000515"/>
+  <roomOrigin
+      x="6877.87615416716"
+      y="895.554984200831"
+      z="64.0212346077015"
+      rx="-0.00035405915893805"
+      ry="0.0813275486771378"
+      rz="-0.528133124177889"
+  />
+</ViconCalib>
+```
 
+This XML data must be kept with the CSV data, it specifies where the 
+[common world-coordinate](http://git.gwillz.com.au/eagleeye/formattertool/blob/master/README.md#common-world-coordinates) 
+origin lies. This is necessary to convert Vicon world-coordinates to the 
+common world-coordinates.
