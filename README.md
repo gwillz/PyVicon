@@ -1,27 +1,27 @@
 # Eagle Eye /// Capture Tool /// Documentation
 
-## Overview
+## 1 Overview
 This software records raw Vicon data into CSV files. The CSV files include 
 timestamps and flash sync. The software is intended to be run a system running 
 the Vicon Tracker software. This may require administrative priviledges to 
 install support libraries or driver software.
 
-#### Procedure
+#### 1.1 Procedure
 The procedure is as follows:
 * Create physical objects
-* [Prepare](#preparation) the camera, sync, Vicon tracker
-* [Configure](#configuration-file) software accordingly
-* [Calibrate](#room-calibration) the room
-* [Capture](#data-capture) data
+* [Prepare](#2-1-preparation) the camera, sync, Vicon tracker
+* [Configure](#2-1-2-configuration) software accordingly
+* [Calibrate](#2-2-room-calibration) the room
+* [Capture](#2-3-data-capture) data
 
-#### Outputs
+#### 1.2 Outputs
 The software outputs two file types.
-* A [CSV file](#csv-data-output) from _run_capture.bat_
-* An [XML file](#xml-data-output) from _run_calib.bat_
+* A [CSV file](#3-5-csv-data-output) from _run_capture.bat_
+* An [XML file](#3-6-xml-data-output) from _run_calib.bat_
 
-## Procedure
-### Preparation
-#### Vicon objects
+## 2 Procedure
+### 2.1 Preparation
+#### 2.1.1 Vicon objects
 The Vicon system captures objects that are defined as unique "constellations" 
 of dots placed on physical objects within the lab. These objects are configured 
 in the _Vicon Tracker v1.2_ software. Some experimental/working objects are 
@@ -31,18 +31,18 @@ Each object is given a name in Vicon, this name must be specified each time
 this software is run. This is done in the batch executable files (.bat). Simply 
 right click to edit, double click to execute.
 
-#### Configuration file
+#### 2.1.2 Configuration
 Most of these setting don't need to change. Different settings may apply to 
 different Vicon Systems. Typically only the _framerate_ or _serial_device_ 
 variables would need tweaking. The configuration file must contain all of the 
-variables as specified in this [documentation here](#configuration). 
+variables as specified in this [documentation here](#3-4-configuration-file). 
 
 A list of available serial ports can be found with this command:
-```
+```batch
 python2 -m serial.tools.list_ports
 ```
 
-#### Syncronization
+#### 2.1.3 Syncronization
 The video file and Vicon data need to be syncronized. This is done with a 
 [sync circuit](#flash-sync-circuit). The circuit signals the software to create 
 a marker in the data and simultaneously triggers a camera flash to be seen in 
@@ -53,14 +53,35 @@ the start and end of a dataset.
 The [Formatter Tool](http://git.gwillz.com.au/eagleeye/formattertool) 
 will ignore any data outside of these flashes.
 
-### Room Calibration
-The 
+### 2.2 Room Calibration
+Before data can be captured, the camera pose must be recorded. This is done with 
+the _run_calib.bat_ file and the _Vicon Wand_. 
 
-### Data Capture
-* 
+1. Ensure the _Vicon Tracker_ software is running
+2. Place the Wand in view of of the camera, close enough to distinguish the dots
+3. Ensure the Wand is enabled in the tracker software
+4. Execute (double click) the _run_calib.bat_ file
+5. Check the _data_ folder for the [output XML](#3-6-xml-data-output) file.
+6. Remove the Wand from the scene
 
-## Supporting Documentation
-### Prerequisites
+### 2.3 Data Capture
+The camera _must not_ be moved between the calibration and capture steps. 
+Thankfully, the Ricoh Theta can be remotely triggered via a smartphone.
+
+1. Ensure the appropriate objects are enabled in the tracker software
+2. Edit the _run_capture.bat_ file to include all objects to be tracked
+3. Also edit to specify the recording time
+4. Prepare the camera for recording
+5. Execute the _run_capture.bat_ file
+6. Start the camera recording
+7. Trigger the Flash-Sync - start of the dataset
+8. Perform movements with the objects
+9. Trigger the Flash-Sync again - end of the dataset
+10. Stop the camera recording
+11. Wait or force close the batch file
+
+## 3 Supporting Documentation
+### 3.1 Prerequisites
 * Windows 7+
 * Python 2.7
 * Vicon Tracker System (tested with v1.2)
@@ -68,11 +89,11 @@ The
 * Flash Sync circuit
 * A camera flash w/ PC-SYNC connection
 
-### Legal
+### 3.2 Legal
 * The CRAPL License
 * http://matt.might.net/articles/crapl/CRAPL-LICENSE.txt
 
-### Flash Sync Circuit
+### 3.3 Flash Sync Circuit
 This is a circuit by design of Peter Barsznica that triggers a camera flash and 
 an identifier in the software, in order to syncronise the video and data feeds.
 
@@ -84,7 +105,7 @@ The circuit connects to the serial GND and CTS pins:
 
 ![Serial Pinout](assets/pinouts_serial.gif)
 
-### Configuration
+### 3.4 Configuration File
 The configuration file (.cfg) specifies common settings that don't need to 
 change during a recording session or within a lab. These are the variables it 
 contains and the corresponding defaults.
@@ -100,7 +121,7 @@ contains and the corresponding defaults.
 | serial_device    | COM4          |
 | run_serial       | True          |
 
-### CSV Data Output
+### 3.5 CSV Data Output
 | Row | Data      | Type  | Examples |
 | --- | --------- | ----- | -------- |
 | 0   | Timestamp | float | 0.144    |
@@ -112,19 +133,19 @@ contains and the corresponding defaults.
 | 6   | Y-rotate  | float | 0.2323   |
 | 7   | Z-rotate  | float | 2.1102   |
 
-#### Sync
+#### 3.5.1 Sync
 * . (dot) - is a regular frame
 * - F - is a flash frame, they may be sequential but must only appear twice 
 within a dataset
 * - L - is a late frame, this means the data was not recieved before the next 
 frame was due
 
-#### Notes
+#### 3.5.2 Notes
 * The timestamp is 0 (zero) on the first frame
 * The X, Y, Z rotational data corresponds to pitch, yaw, roll (which is which 
 is unknown)
 
-### XML Data Output
+### 3.6 XML Data Output
 ```xml
 <?xml version="1.0"?>
 <ViconCalib>
