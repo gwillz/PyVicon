@@ -1,5 +1,9 @@
 #python stuff
 
 *.pyc
-/data/*.csv
+/raw_data/*.csv
+/raw_data/*.xml
+/processed_data/*.csv
+/final_data/*.xml
+
 

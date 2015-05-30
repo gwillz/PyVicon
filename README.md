@@ -59,7 +59,7 @@ variables as specified in this [documentation here](#3-2-configuration-file).
 
 A list of available serial ports can be found with this command:
 ```sh
-python2 -m serial.tools.list_ports
+$ python2 -m serial.tools.list_ports
 ```
 
 #### 2.1.3 Syncronization
@@ -69,7 +69,7 @@ a marker in the data and simultaneously triggers a camera flash to be seen in
 the video.
 
 _IMPORTANT:_ a dataset can only contain two flashes. These two flashes represent 
-the start and end of a dataset. The [Formatter Tool](/eagleeye/formattertool) 
+the start and end of a dataset. The [Format Tool](/eagleeye/formattertool) 
 will ignore any data outside of these flashes.
 
 ### 2.2 Room Calibration
@@ -80,7 +80,7 @@ the _run_calib.bat_ file and the _Vicon Wand_.
 2. Place the Wand in view of of the camera, close enough to distinguish the dots
 3. Ensure the Wand is enabled in the tracker software
 4. Execute (double click) the _run_calib.bat_ file
-5. Check the _data_ folder for the [orgin XML](#3-4-origin-xml-data-output) file.
+5. Check the _raw_data_ folder for the [orgin XML](#3-4-origin-xml-data-output) file.
 6. Remove the Wand from the scene
 
 ### 2.3 Data Capture
@@ -98,7 +98,7 @@ Thankfully, the Ricoh Theta can be remotely triggered via a smartphone.
 9. Trigger the Flash-Sync again - end of the dataset
 10. Stop the camera recording
 11. Wait or force close the batch file
-12. Check the _data_ folder, that the objects are all recorded
+12. Check the _raw_data_ folder, that the objects are all recorded
 
 ## 3 Additional
 ### 3.1 Flash Sync Circuit
@@ -133,7 +133,7 @@ contains and the corresponding defaults.
 This is object data represented in the 
 [World Coordinate System](/eagleeye/converttool#3-2-world-coordinates). Each 
 file contains positional and rotational data for an individual object captured 
-by the Vicon Tracker. This is considered _raw data_. 
+by the Vicon Tracker. 
 
 | Column | Data      | Type  | Examples |
 | ------ | --------- | ----- | -------- |
@@ -148,8 +148,8 @@ by the Vicon Tracker. This is considered _raw data_.
 
 #### 3.3.1 Sync
 * . (dot) - is a regular frame
-* - F - is a flash frame, they may be sequential but must only appear twice within a dataset
-* - L - is a late frame, this means the data was not recieved before the next frame was due
+* F - is a flash frame, they may be sequential but must only appear twice within a dataset
+* L - is a late frame, this means the data was not recieved before the next frame was due
 
 #### 3.3.2 Notes
 * The timestamp is 0 (zero) on the first frame
