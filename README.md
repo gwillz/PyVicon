@@ -6,7 +6,7 @@ timestamps and flash sync. The software is intended to be run a system running
 the Vicon Tracker software. This may require administrative priviledges to 
 install support libraries or driver software.
 
-#### 1.1 Procedure
+#### 1.1 Usage
 The procedure is as follows:
 * Create physical objects
 * [Prepare](#2-1-preparation) the camera, sync, Vicon tracker
@@ -16,8 +16,8 @@ The procedure is as follows:
 
 #### 1.2 Outputs
 The software outputs two file types.
-* A [CSV file](#3-6-csv-data-output) from _run_capture.bat_
-* An [XML file](#3-7-xml-data-output) from _run_calib.bat_
+* A [CSV file](#3-6-raw-csv-data-output) from _run_capture.bat_
+* An [XML file](#3-7-origin-xml-data-output) from _run_calib.bat_
 
 ## 2 Procedure
 ### 2.1 Preparation
@@ -50,7 +50,7 @@ the video.
 
 _IMPORTANT:_ a dataset can only contain two flashes. These two flashes represent 
 the start and end of a dataset. 
-The [Formatter Tool](http://git.gwillz.com.au/eagleeye/formattertool) 
+The [Formatter Tool](/eagleeye/formattertool) 
 will ignore any data outside of these flashes.
 
 ### 2.2 Room Calibration
@@ -128,7 +128,12 @@ contains and the corresponding defaults.
 | serial_device    | COM4          |
 | run_serial       | True          |
 
-### 3.6 CSV Data Output
+### 3.6 Raw CSV Data Output
+This is object data represented in the 
+[World Coordinate System](/eagleeye/converttool#3-5-world-coordinates). Each 
+file contains positional and rotational data for an individual object captured 
+by the Vicon Tracker. This is considered _raw data_. 
+
 | Column | Data      | Type  | Examples |
 | ------ | --------- | ----- | -------- |
 | 0      | Timestamp | float | 0.144    |
@@ -152,7 +157,7 @@ frame was due
 * The X, Y, Z rotational data corresponds to pitch, yaw, roll (which is which 
 is unknown)
 
-### 3.7 XML Data Output
+### 3.7 Origin XML Data Output
 ```xml
 <?xml version="1.0"?>
 <ViconCalib>
@@ -169,6 +174,6 @@ is unknown)
 ```
 
 This XML data must be kept with the CSV data, it specifies where the 
-[common world-coordinate](http://git.gwillz.com.au/eagleeye/converttool/blob/master/README.md#3-4-common-world-coordinates) 
-origin lies. This is necessary to convert Vicon world-coordinates to the 
-common world-coordinates.
+[common world coordinate origin](/eagleeye/converttool#3-5-1-common-world-coordinate-origin) 
+lies. This is necessary to convert Vicon world coordinates to the common world 
+coordinates.
