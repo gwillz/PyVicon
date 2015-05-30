@@ -2,9 +2,9 @@
 
 ## 1 Overview
 This software records raw Vicon data into CSV files. The CSV files include 
-timestamps and flash sync. The software is intended to be run a system running 
-the Vicon Tracker software. This may require administrative priviledges to 
-install support libraries or driver software.
+timestamps and flash sync. The software is intended to be run on a system with 
+the Vicon Tracker software installed. This may require administrative 
+priviledges to install support libraries or driver software.
 
 #### 1.1 Usage
 The procedure is as follows:
@@ -16,8 +16,8 @@ The procedure is as follows:
 
 #### 1.2 Outputs
 The software outputs two file types.
-* A [CSV file](#3-6-raw-csv-data-output) from _run_capture.bat_
-* An [XML file](#3-7-origin-xml-data-output) from _run_calib.bat_
+* A raw [Vicon CSV](#3-6-raw-csv-data-output) data file from _run_capture.bat_
+* An [Origin XML](#3-7-origin-xml-data-output) file from _run_calib.bat_
 
 ## 2 Procedure
 ### 2.1 Preparation
