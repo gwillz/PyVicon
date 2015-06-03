@@ -8,8 +8,6 @@ priviledges to install support libraries or driver software.
 
 ### 1.1 Authors
 * Gwilyn Saunders
-* Kin Kuen Kiu
-* Manjung Kim
 * Peter Barsznica
 
 ### 1.2 Legal
