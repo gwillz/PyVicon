@@ -28,7 +28,6 @@ settings = load_cfg(CONFIG)
 CFG_VAR = "settings"
 
 # config load
-SERVER_PATH = win_cwd() + settings.get(CFG_VAR, "server_path")
 IP_ADDR = settings.get(CFG_VAR, "ip_address")
 PORT = settings.get(CFG_VAR, "port")
 OUTFILE = win_cwd() + settings.get(CFG_VAR, "output_folder") + "/" + \
