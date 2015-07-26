@@ -2,7 +2,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.1
+# version 0.1.2
 # 
 # Wraps the socket object and provides default values
 # returns an array of strings for use in writing CSV rows
@@ -26,8 +26,9 @@ class ViconSocket():
         else:
             print "Vicon socket already open"
             
-    def get(self, command, object):
-        self._sock.send(command + " " + object)
+    def get(self, command, object=None):
+        cmd = command if object is None else command + " " + object
+        self._sock.send(cmd)
         return self._sock.recv(self._buffer).split(self._split)
         
     def close(self):
