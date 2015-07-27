@@ -3,99 +3,93 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.6.13
+# version 0.7.16
 #
 # Retrieves Vicon data via TCP sockets.
 # Includes syncronized timestamp data via a R232 COM port.
 #
-# usage: python2 vicon_capture.py <object name> {--time <in minutes> | --config <file>}
+# usage: python2 vicon_capture.py {--time <in minutes> | --config <file>}
 #
 
-from eagleeye import ViconSocket, Sleeper
+from eagleeye import ViconSocket, Sleeper, EasyConfig
 from eagleeye.common import *
 from datetime import datetime
 from serial import Serial
 import csv, sys
 
-# args sanity check
-args_check("python2 vicon_capture.py <object name> \
-            {--time <in minutes> | --config <file>}")
-
 # set arguments
-OBJECT = sys.argv[1]
-TIME = int(find_arg("time", "5"))
-CONFIG = find_arg("config", find_cfg())
-settings = load_cfg(CONFIG)
-CFG_VAR = "settings"
+TIME = int(find_arg("time", "3"))
+cfg = EasyConfig(find_arg("config", None))
+OUTPATH = win_cwd() + cfg.output_folder + "/" + \
+          str(datetime.now().strftime(cfg.date_format))
 
-# config load
-IP_ADDR = settings.get(CFG_VAR, "ip_address")
-PORT = settings.get(CFG_VAR, "port")
-OUTFILE = win_cwd() + settings.get(CFG_VAR, "output_folder") + "/" + \
-          str(datetime.now().strftime(settings.get(CFG_VAR, "date_format"))) + \
-          "_" + OBJECT + ".csv"
-DELIMITER = settings.get(CFG_VAR, "output_delimiter")
-FRAMERATE = int(settings.get(CFG_VAR, "framerate")) # per second
-SERIAL_DEV = settings.get(CFG_VAR, "serial_device")
-DO_FLASH = settings.get(CFG_VAR, "run_serial") == "True"
-
-num_frames = TIME * 60 * FRAMERATE
-sleeper = Sleeper(1.0 / FRAMERATE)
+num_frames = int(TIME * 60 * cfg.framerate)
+sleeper = Sleeper(1.0 / cfg.framerate)
 
 # data directory sanity check
-check_directory(settings.get(CFG_VAR, "output_folder"))
+check_directory(cfg.output_folder)
 
 # start the serial listener
-if DO_FLASH:
+if cfg.run_serial:
     try:
-        serial = Serial(SERIAL_DEV, 19200)
+        serial = Serial(cfg.serial_device, 19200)
     except OSError:
-        print "Couldn't open serial device", SERIAL_DEV
+        print "Couldn't open serial device", cfg.serial_device
         quit(1)
 else:
     print "Not listening to serial"
 
+
+# open Vicon client
+client = ViconSocket(cfg.ip_address, port=cfg.port)
+client.open()
+objects = client.get("getSubjects")[1:]
+
 # print status
 print ""
-print "Using config:", CONFIG
+print "Using config:", cfg._path
 print "Running for", TIME, "minutes"
-print "Capturing at", FRAMERATE, "per second"
-print "Looking for", OBJECT
+print "Capturing at", cfg.framerate, "per second"
+print "Recording these objects:", objects
 print ""
 
 # open CSV file
-with open(OUTFILE, 'wb') as csvfile:
-    w = csv.writer(csvfile, delimiter=DELIMITER, quoting=csv.QUOTE_MINIMAL)
+csvfiles = []
+csvwriters = {}
+for obj in objects:
+    path = "{0}_{1}.csv".format(OUTPATH, obj)
+    f = open(path, 'wb')
+    w = csv.writer(f, delimiter=cfg.output_delimiter, quoting=csv.QUOTE_MINIMAL)
+    csvfiles.append(f)
+    csvwriters[obj] = w
+
+# main loop
+for i in range(0, num_frames):
+    sleeper.stamp()
     
-    # open Vicon client
-    client = ViconSocket(IP_ADDR, port=int(PORT))
-    client.open()
+    # get flash timestamper
+    flash = "."
+    if cfg.run_serial:
+        if serial.getCTS():
+            flash = "F"
     
-    # main loop
-    for i in range(0, num_frames):
-        sleeper.stamp()
-        
-        # grab data
-        r = client.get("getRotation", OBJECT)
-        t = client.get("getTranslation", OBJECT)
-        
-        # get flash timestamper
-        flash = "."
-        if DO_FLASH:
-            if serial.getCTS():
-                flash = "F"
-        
-        # write data
+    # grab data for each object
+    for obj in csvwriters:
+        r = client.get("getRotation", obj)
+        t = client.get("getTranslation", obj)
+    
+        # write data to appropriate writer
         if len(r) > 0 and len(t) > 0:
-            w.writerow([sleeper.getStamp(), flash] + t + r)
+            csvwriters[obj].writerow([sleeper.getStamp(), flash] + t + r)
             sys.stdout.write(flash)
             
-        # sleep until next timestamp
-        sleeper.sleep("\bL")
-        
-        sys.stdout.flush()
-        
-    client.close()
+    # sleep until next timestamp
+    sleeper.sleep("\bL")
+    sys.stdout.flush()
+    
+# clean up
+for f in csvfiles: f.close()
+client.close()
     
 print "\nComplete."
 exit(0)
