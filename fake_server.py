@@ -3,13 +3,14 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# 
+# version: 0.2 
+#
 # A fake vicon server for testing outside of the lab.
 #
 
 import SocketServer
 
-class ViconHandler(SocketServer.BaseRequestHandler):
+class ViconHandler(SocketServer.StreamRequestHandler):
     
     delim = " "
     objects = {'EE1': {'r': ['0.1', '0.2', '0.3'], 't': ['100.1', '-100.2', '100.3']},
@@ -19,26 +20,38 @@ class ViconHandler(SocketServer.BaseRequestHandler):
                }
     
     def handle(self):
-        self.data = self.request.recv(1024).split(self.delim)
-        print "{}:".format(self.client_address[0]), self.data
+        try:
+            while True:
+                request = self.rfile.readline()
+                if not request: break
+            
+                reply = self.processRequest(request)
+                self.wfile.write(reply + '\n')
+            
+        except Exception as e:
+            print "error: {0} - {1}".format(self.client_address[0], e)
+    
+        print "disconnected: {0}".format(self.client_address[0])
+    
+    def processRequest(self, request):
+        data = request.split(self.delim)
         
-        cmd = self.data[0].strip()
+        cmd = data[0].strip()
+        print "{0}: {1}".format(self.client_address[0], cmd)
         
         if cmd == "getRotation":
-            obj = self.data[1].strip()
-            reply = "{0} {1}".format(obj, self.delim.join(self.objects[obj]['r']))
+            obj = data[1].strip()
+            return "{0} {1}".format(obj, self.delim.join(self.objects[obj]['r']))
             
         elif cmd == "getTranslation":
-            obj = self.data[1].strip()
-            reply = "{0} {1}".format(obj, self.delim.join(self.objects[obj]['t']))
+            obj = data[1].strip()
+            return "{0} {1}".format(obj, self.delim.join(self.objects[obj]['t']))
             
         elif cmd == "getSubjects":
-            reply = "{0} {1}".format(len(self.objects), self.delim.join(self.objects.keys()))
+            return "{0} {1}".format(len(self.objects), self.delim.join(self.objects.keys()))
             
         else:
-            reply = "err"
-        
-        self.request.sendall(reply)
+            return "err"
     
 if __name__ == "__main__":
     HOST, PORT = "localhost", 1802
