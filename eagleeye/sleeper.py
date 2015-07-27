@@ -2,7 +2,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.1
+# version 0.1.1
 # 
 # This sleeper object will sleep _until_ the next timestamp is due
 # This way there is no timestamp discrepencies when performing 
@@ -17,9 +17,9 @@
 #       sleeper.sleep()
 #
 
-import time
+import time, sys
 
-class Sleeper():
+class Sleeper:
     # sleeptime: time to sleep until releasing the thread
     # resolution: time between comparing the stamps
     # epoch: time that the loop starts, the first time stamp() is called

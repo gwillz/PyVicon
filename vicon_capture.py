@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.7.17
+# version 0.7.18
 #
 # Retrieves Vicon data via TCP sockets.
 # Includes syncronized timestamp data via a R232 COM port.
@@ -81,8 +81,8 @@ for i in range(0, num_frames):
         # write data to appropriate writer
         if len(r) > 0 and len(t) > 0:
             csvwriters[obj].writerow([sleeper.getStamp(), flash] + t + r)
-            sys.stdout.write(flash)
-            
+    sys.stdout.write(flash)
+    
     # sleep until next timestamp
     sleeper.sleep("\bL")
     sys.stdout.flush()
