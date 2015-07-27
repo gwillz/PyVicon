@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version: 0.2.3
+# version: 0.2.4
 #
 # A fake vicon server for testing outside of the lab.
 #
@@ -22,12 +22,10 @@ class ViconHandler(SocketServer.BaseRequestHandler):
     def handle(self):
         try:
             while True:
-                #req = self.rfile.readline()
                 req = self.request.recv(1024)
                 if not req: break
             
                 reply = self.processRequest(req)
-                #self.wfile.write(reply + '\n')
                 self.request.sendall(reply)
             
         except Exception as e:
@@ -42,10 +40,10 @@ class ViconHandler(SocketServer.BaseRequestHandler):
         print "{0}: {1}".format(self.client_address[0], cmd)
         
         if cmd == "getRotation":
-            return self.delim.join(self.objects[obj]['r'])
+            return self.delim.join(self.objects[data[1].strip()]['r'])
             
         elif cmd == "getTranslation":
-            return self.delim.join(self.objects[obj]['t'])
+            return self.delim.join(self.objects[data[1].strip()]['t'])
             
         elif cmd == "getSubjects":
             return "{0} {1}".format(len(self.objects), self.delim.join(self.objects.keys()))

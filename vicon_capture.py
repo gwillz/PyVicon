@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.7.16
+# version 0.7.17
 #
 # Retrieves Vicon data via TCP sockets.
 # Includes syncronized timestamp data via a R232 COM port.
@@ -50,7 +50,7 @@ print ""
 print "Using config:", cfg._path
 print "Running for", TIME, "minutes"
 print "Capturing at", cfg.framerate, "per second"
-print "Recording these objects:", objects
+print "Recording these objects:", ", ".join(objects)
 print ""
 
 # open CSV file
