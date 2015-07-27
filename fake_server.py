@@ -3,14 +3,14 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version: 0.2 
+# version: 0.2.3
 #
 # A fake vicon server for testing outside of the lab.
 #
 
 import SocketServer
 
-class ViconHandler(SocketServer.StreamRequestHandler):
+class ViconHandler(SocketServer.BaseRequestHandler):
     
     delim = " "
     objects = {'EE1': {'r': ['0.1', '0.2', '0.3'], 't': ['100.1', '-100.2', '100.3']},
@@ -22,11 +22,13 @@ class ViconHandler(SocketServer.StreamRequestHandler):
     def handle(self):
         try:
             while True:
-                request = self.rfile.readline()
-                if not request: break
+                #req = self.rfile.readline()
+                req = self.request.recv(1024)
+                if not req: break
             
-                reply = self.processRequest(request)
-                self.wfile.write(reply + '\n')
+                reply = self.processRequest(req)
+                #self.wfile.write(reply + '\n')
+                self.request.sendall(reply)
             
         except Exception as e:
             print "error: {0} - {1}".format(self.client_address[0], e)
@@ -40,16 +42,22 @@ class ViconHandler(SocketServer.StreamRequestHandler):
         print "{0}: {1}".format(self.client_address[0], cmd)
         
         if cmd == "getRotation":
-            obj = data[1].strip()
-            return "{0} {1}".format(obj, self.delim.join(self.objects[obj]['r']))
+            return self.delim.join(self.objects[obj]['r'])
             
         elif cmd == "getTranslation":
-            obj = data[1].strip()
-            return "{0} {1}".format(obj, self.delim.join(self.objects[obj]['t']))
+            return self.delim.join(self.objects[obj]['t'])
             
         elif cmd == "getSubjects":
             return "{0} {1}".format(len(self.objects), self.delim.join(self.objects.keys()))
-            
+        
+        elif cmd == "getAll":
+            reply = str(len(self.objects)) + " "
+            for obj in self.objects:
+                reply += "{0} {1} {2}".format(obj,\
+                            self.delim.join(self.objects['obj']['t']),\
+                            self.delim.join(self.objects['obj']['r']))
+            return reply
+        
         else:
             return "err"
     
