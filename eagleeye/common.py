@@ -2,12 +2,11 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.5.13
 #
 # Common routines for vicon_capture.py & room_calib.py
 #
 
-import sys, os, errno, ConfigParser
+import sys, os, errno
 
 # Prints a notice if the exit reason was unclean.
 def quit(ret_code):
@@ -42,23 +41,6 @@ def find_cfg(extension=".cfg"):
             return f
     print "Cannot find a config file!"
     quit(1)
-
-# Loads the config file with ConfigParser
-# does sanity checks and
-# returns a RawConfigParser class
-def load_cfg(path):
-    if not os.path.isfile(path):
-        print "Config not found:", path
-        quit(1)
-    
-    settings = ConfigParser.ConfigParser()
-    try:
-        settings.read(path)
-    except:
-        print path
-        print sys.exc_info()[0]
-        quit(1)
-    return settings
 
 # Returns a current working directory 
 # that has the correct file separator

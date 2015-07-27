@@ -7,4 +7,5 @@
 
 from viconsocket import *
 from sleeper import *
+from easyconfig import *
 #import common
