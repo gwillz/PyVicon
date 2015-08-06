@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version: 0.2.4
+# version: 0.2.5
 #
 # A fake vicon server for testing outside of the lab.
 #
@@ -49,11 +49,11 @@ class ViconHandler(SocketServer.BaseRequestHandler):
             return "{0} {1}".format(len(self.objects), self.delim.join(self.objects.keys()))
         
         elif cmd == "getAll":
-            reply = str(len(self.objects)) + " "
+            reply = str(len(self.objects))
             for obj in self.objects:
-                reply += "{0} {1} {2}".format(obj,\
-                            self.delim.join(self.objects['obj']['t']),\
-                            self.delim.join(self.objects['obj']['r']))
+                reply += " {0} {1} {2}".format(obj,\
+                            self.delim.join(self.objects[obj]['t']),\
+                            self.delim.join(self.objects[obj]['r']))
             return reply
         
         else:
