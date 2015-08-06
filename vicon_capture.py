@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.7.18
+# version 0.8.18
 #
 # Retrieves Vicon data via TCP sockets.
 # Includes syncronized timestamp data via a R232 COM port.
@@ -44,6 +44,7 @@ else:
 client = ViconSocket(cfg.ip_address, port=cfg.port)
 client.open()
 objects = client.get("getSubjects")[1:]
+max_all = len(objects) * 7 # seven items of data per object
 
 # print status
 print ""
@@ -73,17 +74,15 @@ for i in range(0, num_frames):
         if serial.getCTS():
             flash = "F"
     
-    # grab data for each object
-    for obj in csvwriters:
-        r = client.get("getRotation", obj)
-        t = client.get("getTranslation", obj)
+    all = client.get("getAll")
     
-        # write data to appropriate writer
-        if len(r) > 0 and len(t) > 0:
-            csvwriters[obj].writerow([sleeper.getStamp(), flash] + t + r)
-    sys.stdout.write(flash)
+    i = 1 # ignore index 0 (number of subjects)
+    while i < max_all:
+        csvwriters[all[i]].writerow([sleeper.getStamp(), flash] + all[i+1:i+7])
+        i += 7
     
     # sleep until next timestamp
+    sys.stdout.write(flash)
     sleeper.sleep("\bL")
     sys.stdout.flush()
     
