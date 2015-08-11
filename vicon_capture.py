@@ -18,11 +18,11 @@ import csv, sys, os
 
 # set arguments
 args = EasyArgs()
-TIME = args.time or 180
+time = args.time or 180
 cfg = EasyConfig(args.config)
-OUTPATH = os.path.join(cfg.output_folder, datetime.now().strftime(cfg.date_format))
+outpath = os.path.join(cfg.output_folder, datetime.now().strftime(cfg.date_format))
 
-num_frames = int(TIME * cfg.framerate) + (cfg.flash_delay * 2)
+num_frames = int(time * cfg.framerate) + (cfg.flash_delay * 2)
 flash_at = [cfg.flash_delay, num_frames - cfg.flash_delay]
 sleeper = Sleeper(1.0 / cfg.framerate)
 
@@ -51,7 +51,7 @@ max_all = len(subjects) * 7 # seven items of data per object
 # print status
 print ""
 print "Using config:", cfg._path
-print "Running for", TIME, "seconds ({} frames)".format(num_frames)
+print "Running for", time, "seconds ({} frames)".format(num_frames)
 print "Flash delay at:", cfg.flash_delay, " ({} seconds)".format(int(cfg.flash_delay / cfg.framerate))
 print "Capturing at", cfg.framerate, "frames per second"
 print "Recording these subjects:\n", ", ".join(subjects)
@@ -61,7 +61,7 @@ print ""
 csvfiles = []
 csvwriters = {}
 for sub in subjects:
-    path = "{0}_{1}.csv".format(OUTPATH, sub)
+    path = "{0}_{1}.csv".format(outpath, sub)
     f = open(path, 'wb')
     w = csv.writer(f, delimiter=cfg.output_delimiter, quoting=csv.QUOTE_MINIMAL)
     csvfiles.append(f)
