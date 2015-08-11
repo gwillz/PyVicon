@@ -2,28 +2,30 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.1
+# version 0.1.2
 # 
 # I didn't like getopt.
+# This class separates options (--opt var) from arguments [0] => arg.
 # 
-#
+# 
 # Usage example in the tester script
 # run tests with:
 #  $ python2 easyargs.py test
 #
 # Special uses include compatibility with EasyConfig's config finder.
 # i.e:
-#  args = EasyArgs()
-#  cfg = EasyConfig(args.config)
-#
+#   args = EasyArgs()
+#   cfg = EasyConfig(args.config)
 # args.config will return False if not found, causing EasyConfig to 
 # start instead search the working directory for a config file.
 # 
 # Cheeky special use - default values.
 # i.e:
-#  time = args.time or 180
-#  
+#   time = args.time or 180 
 # If args.time is False, the 'or' statement will assign time as 180.
+#
+# Beware: -o will return the same as -option, --option, and --o
+# This also means -o cannot distinguish between --option and --other (it'll be random probably)
 #
 
 import os, sys
@@ -36,17 +38,20 @@ class EasyArgs:
         o = None
         for v in args:
             if v.startswith("-") and o is None:
+                # found an option, next loop be the value
                 o = v.replace("-", "")
             elif o is not None:
                 if v.startswith("-"):
+                    # to say, the option exists, but has no value
                     self._ops[o] = True
                 else:
                     self._ops[o] = self._converttype(v)
                 o = None # reset
-            else: # o is still None
+            else:
+                # when o is none, it is now an argument
                 self._noops.append(self._converttype(v))
         
-    
+    # True if has all of the listed options
     def verifyOpts(self, *ops):
         for o in ops:
             if self.__getattr__(o) is None:
@@ -54,9 +59,11 @@ class EasyArgs:
                 return False
         return True
     
+    # True if has _more_than_or_equal_ singular arguments than 'length'
     def verifyLen(self, length):
-        return length >= len(self._noops)
+        return length <= len(self._noops)
     
+    # I.e: EasyArgs.option_name # => option_var
     def __getattr__(self, key):
         if key in self._ops:
             return self._ops[key]
@@ -67,9 +74,11 @@ class EasyArgs:
         
         return False
         
+    # I.e: EasyArgs[0] # => first arg (typically script.py)
     def __getitem__(self, key):
         return self._noops[key]
     
+    # An inner routine function to auto-convert type from strings
     def _converttype(self, var):
         if "." in var:
             try: return float(var)
@@ -83,6 +92,7 @@ class EasyArgs:
         
         return var
     
+    # string representation - i.e: print EasyArgs
     def __str__(self):
         out = []
         for a in self._noops: out.append(str(a))
@@ -91,8 +101,8 @@ class EasyArgs:
         
     
 if __name__ == "__main__" and sys.argv[1] == 'test':
-    
-    test_args = ["-u", "element 2", "regular", "--special", "variable1", "-hello", "world", "nothing"]
+    test_args = ["-u", "element 2", "regular", "--special", "variable1", \
+                    "-hello", "world", "nothing", "--true", "--haha", "again", "--end"]
     args = EasyArgs(test_args)
     
     print "testing:", test_args
@@ -106,7 +116,7 @@ if __name__ == "__main__" and sys.argv[1] == 'test':
     print "0:", args[0]
     print "1:", args[1]
     print "s:", args.s
-    print "hello:", args.hello
+    print "hello:", args.h # (which h is uncertain)
     print ""
     print "all:", args
     
