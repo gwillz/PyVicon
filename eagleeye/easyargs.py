@@ -2,7 +2,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.1.2
+# version 0.1.4
 # 
 # I didn't like getopt.
 # This class separates options (--opt var) from arguments [0] => arg.
@@ -24,8 +24,10 @@
 #   time = args.time or 180 
 # If args.time is False, the 'or' statement will assign time as 180.
 #
-# Beware: -o will return the same as -option, --option, and --o
-# This also means -o cannot distinguish between --option and --other (it'll be random probably)
+# Beware: 
+#   -o will return the same as -option, --option, and --o
+#   this also means -o cannot distinguish between --option and --other
+#   remedy this by using more letter -ot and -op will be distinguishable
 #
 
 import os, sys
@@ -42,14 +44,18 @@ class EasyArgs:
                 o = v.replace("-", "")
             elif o is not None:
                 if v.startswith("-"):
-                    # to say, the option exists, but has no value
-                    self._ops[o] = True
+                    self._ops[o] = True # the option exists, but has no value
+                    o = v.replace("-", "") # still load next option
                 else:
                     self._ops[o] = self._converttype(v)
-                o = None # reset
+                    o = None # reset
             else:
                 # when o is none, it is now an argument
                 self._noops.append(self._converttype(v))
+        
+        # catch end options
+        if o is not None:
+            self._ops[o] = True
         
     # True if has all of the listed options
     def verifyOpts(self, *ops):
@@ -69,7 +75,7 @@ class EasyArgs:
             return self._ops[key]
         
         for op in self._ops:
-            if op.startswith(key):
+            if key.startswith(op):
                 return self._ops[op]
         
         return False
@@ -102,7 +108,7 @@ class EasyArgs:
     
 if __name__ == "__main__" and sys.argv[1] == 'test':
     test_args = ["-u", "element 2", "regular", "--special", "variable1", \
-                    "-hello", "world", "nothing", "--true", "--haha", "again", "--end"]
+                    "-he", "world", "nothing", "--true", "-ha", "again", "--end"]
     args = EasyArgs(test_args)
     
     print "testing:", test_args
@@ -116,7 +122,8 @@ if __name__ == "__main__" and sys.argv[1] == 'test':
     print "0:", args[0]
     print "1:", args[1]
     print "s:", args.s
-    print "hello:", args.h # (which h is uncertain)
+    print "hello:", args.hello
+    print "haha:", args.haha
     print ""
     print "all:", args
     
