@@ -2,7 +2,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.2.4
+# version 0.2.5
 # 
 # I found ConfigParser a bit messy.
 # 
@@ -10,8 +10,8 @@
 import ConfigParser, os, sys
 
 class EasyConfig:
-    def __init__(self, path=None, group='settings', extension='.cfg'):
-        if path is not None:
+    def __init__(self, path=False, group='settings', extension='.cfg'):
+        if path is not False:
             if not os.path.isfile(path):
                 raise IOError("Config not found: {0}".format(path))
             self._path = path
