@@ -33,7 +33,7 @@ if not os.path.exists(cfg.output_folder):
 # start the serial listener
 if cfg.run_serial:
     try:
-        serial = Serial(cfg.serial_device, 192000)
+        serial = Serial(cfg.serial_device, 9600)
         serial.setRTS(0) # set at zero
     except OSError:
         print "Couldn't open serial device", cfg.serial_device
@@ -75,9 +75,10 @@ for c in range(0, num_frames):
     flash = "."
     if cfg.run_serial and c in flash_at:
         serial.setRTS(1)
-        serial.setRTS(0)
         flash = "F"
         sys.stdout.write("\r - - - - - - - Flash!\r")
+    else: 
+        serial.setRTS(0)
     
     all = client.get("getAll")
     
