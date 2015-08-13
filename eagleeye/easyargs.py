@@ -2,7 +2,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.1.4
+# version 0.1.5
 # 
 # I didn't like getopt.
 # This class separates options (--opt var) from arguments [0] => arg.
@@ -60,7 +60,7 @@ class EasyArgs:
     # True if has all of the listed options
     def verifyOpts(self, *ops):
         for o in ops:
-            if self.__getattr__(o) is None:
+            if self.__getattr__(o) is False:
                 self._missing = o
                 return False
         return True
