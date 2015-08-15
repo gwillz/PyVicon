@@ -2,7 +2,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.1.5
+# version 0.1.6
 # 
 # I didn't like getopt.
 # This class separates options (--opt var) from arguments [0] => arg.
@@ -30,7 +30,7 @@
 #   remedy this by using more letter -ot and -op will be distinguishable
 #
 
-import os, sys
+import os, sys, re, ast
 
 class EasyArgs:
     def __init__(self, args=sys.argv):
@@ -86,19 +86,26 @@ class EasyArgs:
     
     # An inner routine function to auto-convert type from strings
     def _converttype(self, var):
+        # test float
         if "." in var:
             try: return float(var)
             except: pass
         
+        # test int
         try: return int(var)
         except: pass
         
+        # test bool
         if var in ["True", "False"]:
             return var == "True"
         
+        # test tuple, lists
+        if re.match("[\(\[].*[\)\]]", var) is not None:
+            return ast.literal_eval(var)
+        
         return var
     
-    # string representation - i.e: print EasyArgs
+    # string representation - i.e: print EasyArgs()
     def __str__(self):
         out = []
         for a in self._noops: out.append(str(a))
@@ -108,7 +115,8 @@ class EasyArgs:
     
 if __name__ == "__main__" and sys.argv[1] == 'test':
     test_args = ["-u", "element 2", "regular", "--special", "variable1", \
-                    "-he", "world", "nothing", "--true", "-ha", "again", "--end"]
+                 "-he", "world", "nothing", "--true", "-ha", "again", \
+                 "-tuple", "(9,6)", "-list", "[1,4,55,\"seven\"]", "--end"]
     args = EasyArgs(test_args)
     
     print "testing:", test_args
@@ -124,6 +132,8 @@ if __name__ == "__main__" and sys.argv[1] == 'test':
     print "s:", args.s
     print "hello:", args.hello
     print "haha:", args.haha
+    print "tuple:", args.tuple, type(args.tuple)
+    print "list:", args.list, type(args.list)
     print ""
     print "all:", args
     
