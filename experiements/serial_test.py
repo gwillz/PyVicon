@@ -3,16 +3,23 @@
 # pyserial test
 
 from serial import Serial
-from common import *
+from eagleye import EasyConfig
 import time, sys
 
-config = load_config("unisa-ml_vicon.cfg")
+config = EasyConfig("serial_test.cfg")
 
 try:
-    ser = Serial(config.get("settings", "serial_device"), int(config.get("settings", "serial_baud")))
+    ser = Serial(config.serial_device, 192000)
 except OSError:
     print "Cannot open serial device"
     exit(1)
+
+
+while True:
+    if raw_input("eh?:").startswith("y"):    
+        ser.setRTS()
+    
+exit(0)
 
 #print ser.name
 while True:
