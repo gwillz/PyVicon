@@ -2,12 +2,12 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.2.6
+# version 0.2.7
 # 
 # I found ConfigParser a bit messy.
 # 
 
-import ConfigParser, os, sys, ast
+import ConfigParser, os, sys, ast, re
 
 class EasyConfig:
     # opens and parses a config file
@@ -37,7 +37,7 @@ class EasyConfig:
         var = self._cfg.get(self._group, varname)
         
         if varname not in self.__dict__:
-            self.__dict__[varname] = ast.literal_eval(var)
+            self.__dict__[varname] = self._converttype(var)
         
         return self.__dict__[varname]
     
