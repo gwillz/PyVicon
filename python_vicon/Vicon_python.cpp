@@ -56,23 +56,46 @@ static PyObject* pyvicon_version(PyObject* self, PyObject* args) {
 
 static PyObject* pyvicon_enablesegmentdata(PyObject* self, PyObject* args) {
     Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0);
-    
-    return NULL; //STUB
+    return (client->EnableSegmentData().Result == Result::Success) ? Py_True : Py_False;
+}
+
+static PyObject* pyvicon_enablemarkerdata(PyObject* self, PyObject* args) {
+    Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0);
+    return (client->EnableMarkerData().Result == Result::Success) ? Py_True : Py_False;
 }
 
 static PyObject* pyvicon_setstreammode(PyObject* self, PyObject* args) {
     Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0);
+    int input;
+    StreamMode::Enum mode;
     
-    return NULL; //STUB
+    //parse the argument
+    if (!PyArg_ParseTuple(args, "i", &input))
+        return NULL;
+    if (input < 0 && input > 2) 
+        return Py_False;
+    
+    //convert to the enum
+    switch (input) {
+        case 0:
+            mode = StreamMode::ClientPull;
+            break;
+        case 1:
+            mode = StreamMode::ClientPullPreFetch;
+            break;
+        default:
+            mode = StreamMode::ServerPush;
+    }
+    
+    //return result
+    return (client->SetStreamMode(mode).Result == Result::Success) ? Py_True : Py_False;
 }
 
 //------------------------ subject getters ----------------------------
 
 static PyObject* pyvicon_subjectcount(PyObject* self, PyObject* args) {
     Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0);
-    
-    unsigned int sub_count = client->GetSubjectCount().SubjectCount;
-    return Py_BuildValue("I", sub_count);
+    return Py_BuildValue("I", client->GetSubjectCount().SubjectCount);
 }
 
 static PyObject* pyvicon_subjectname(PyObject* self, PyObject* args) {
@@ -84,7 +107,6 @@ static PyObject* pyvicon_subjectname(PyObject* self, PyObject* args) {
     
     //cast from the silly vicon string type
     std::string sub_name = (std::string)client->GetSubjectName(index).SubjectName;
-    
     return Py_BuildValue("s", sub_name.c_str());
 }
 
@@ -99,7 +121,6 @@ static PyObject* pyvicon_subjects(PyObject* self, PyObject* args) {
     for (unsigned int i=0; i<sub_count; ++i)
         subjects[i] = ((std::string)client->GetSubjectName(i).SubjectName).c_str();
     
-    
     return Py_BuildValue("[items]", subjects);
 }
 
@@ -113,8 +134,7 @@ static PyObject* pyvicon_globalrotation(PyObject* self, PyObject* args) {
         return NULL;
     
     Output_GetSegmentGlobalRotationHelical out = client->GetSegmentGlobalRotationHelical(name, name);
-    //do some result checking here
-    //if (out.Result == etc)
+    //TODO: error checking with out.Result?
     
     //we can just pass the rotation array, let python do the rest
     return Py_BuildValue("(items)", out.Rotation);
@@ -128,10 +148,8 @@ static PyObject* pyvicon_globaltranslation(PyObject* self, PyObject* args) {
         return NULL;
     
     Output_GetSegmentGlobalTranslation out = client->GetSegmentGlobalTranslation(name, name);
-    //do some result checking here
-    //if (out.Result == etc)
+    //TODO: error checking?
     
-    //we can just pass the rotation array, let python do the rest
     return Py_BuildValue("(items)", out.Translation);
 }
 
@@ -139,14 +157,12 @@ static PyObject* pyvicon_globaltranslation(PyObject* self, PyObject* args) {
 
 static PyObject* pyvicon_frame(PyObject* self, PyObject* args) {
     Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0);
-    
-    return NULL; //STUB
+    return (client->GetFrame().Result == Result::Success) ? Py_True : Py_False;
 }
 
 static PyObject* pyvicon_framenumber(PyObject* self, PyObject* args) {
     Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0);
-    
-    return NULL; //STUB
+    return Py_BuildValue("I", client->GetFrameNumber().FrameNumber);
 }
 
 static PyObject* pyvicon_markercount(PyObject* self, PyObject* args) {
@@ -157,8 +173,6 @@ static PyObject* pyvicon_markercount(PyObject* self, PyObject* args) {
         return NULL;
     
     Output_GetMarkerCount out = client->GetMarkerCount(name);
-    //error checking here
-    
     return Py_BuildValue("I", out.MarkerCount);
 }
 
@@ -173,12 +187,13 @@ static PyMethodDef ModuleMethods[] = {
      {"subjectName", pyvicon_subjectname, METH_VARARGS, "Get a subject name, given an index"},
      {"subjects", pyvicon_subjects, METH_NOARGS, "Get a list of all subjects"},
      {"globalRotation", pyvicon_globalrotation, METH_VARARGS, "Get global rotation of a subject"},
-     {"globalTraslation", pyvicon_globaltranslation, METH_VARARGS, "Get global translation of a subject"},
+     {"globalTranslation", pyvicon_globaltranslation, METH_VARARGS, "Get global translation of a subject"},
      {"markerCount", pyvicon_markercount, METH_VARARGS, "Get number of visible markers of a subject"},
      {"frame", pyvicon_frame, METH_NOARGS, "I don't know, a status thing?"},
      {"frameNumber", pyvicon_framenumber, METH_NOARGS, "Current frame number"},
      {"setStreamMode", pyvicon_setstreammode, METH_VARARGS, "Stream mode: Pull, PreFetch, Push"},
      {"enableSegmentData", pyvicon_enablesegmentdata, METH_NOARGS, "Enables segment data. Just always use it, I guess."},
+     {"enableMarkerData", pyvicon_enablemarkerdata, METH_NOARGS, "Enables marker data. Use this for markerCount."},
      {"version", pyvicon_version, METH_NOARGS, "Vicon system version"},
      {NULL, NULL, 0, NULL},
 };
@@ -192,4 +207,18 @@ PyMODINIT_FUNC initpyvicon(void) {
     Client* vicon_client = new Client();
     PyObject* pyclient = PyCapsule_New(vicon_client, "pyvicon.client", NULL);
     PyModule_AddObject(m, "client", pyclient);
+    
+    //add StreamMode enum, not that we use anything but clientpull
+    PyObject* sm1 = Py_BuildValue("i", 0);
+    PyObject* sm2 = Py_BuildValue("i", 1);
+    PyObject* sm3 = Py_BuildValue("i", 2);
+    
+    PyObject_SetAttrString(m, "SM_ClientPull", sm1);
+    PyObject_SetAttrString(m, "SM_ClientPullPreFetch", sm2);
+    PyObject_SetAttrString(m, "SM_ServerPush", sm3);
+    
+    //clean up
+    Py_DECREF(sm1);
+    Py_DECREF(sm2);
+    Py_DECREF(sm3);
 }
