@@ -1,5 +1,6 @@
 #include <Python.h>
 #include <string>
+#include <vector>
 #include "Client.h"
 
 using namespace ViconDataStreamSDK;
@@ -55,12 +56,59 @@ static PyObject* pyvicon_subjectname(PyObject* self, PyObject* args) {
     return Py_BuildValue("s", sub_name.c_str());
 }
 
+static PyObject* pyvicon_subjects(PyObject* self, PyObject* args) {
+    Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0);
+    
+    const unsigned int sub_count = client->GetSubjectCount().SubjectCount;
+    const char** subjects = new const char*[sub_count];
+    
+    for (unsigned int i=0; i<sub_count; ++i)
+        subjects[i] = ((std::string)client->GetSubjectName(i).SubjectName).c_str();
+    
+    
+    return Py_BuildValue("[items]", subjects);
+}
+
+static PyObject* pyvicon_globalrotation(PyObject* self, PyObject* args) {
+    Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0);
+    char* name;
+    
+    if (!PyArg_ParseTuple(args, "s", &name))
+        return NULL;
+    
+    Output_GetSegmentGlobalRotationHelical out = client->GetSegmentGlobalRotationHelical(name, name);
+    //do some result checking here
+    //if (out.Result == etc)
+    
+    //we can just pass the rotation array, let python do the rest
+    return Py_BuildValue("(items)", out.Rotation);
+}
+
+static PyObject* pyvicon_globaltranslation(PyObject* self, PyObject* args) {
+    Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0);
+    char* name;
+    
+    if (!PyArg_ParseTuple(args, "s", &name))
+        return NULL;
+    
+    Output_GetSegmentGlobalTranslation out = client->GetSegmentGlobalTranslation(name, name);
+    //do some result checking here
+    //if (out.Result == etc)
+    
+    //we can just pass the rotation array, let python do the rest
+    return Py_BuildValue("(items)", out.Translation);
+}
+
 //declare the accessible functions
 static PyMethodDef ModuleMethods[] = {
      {"connect", pyvicon_connect, METH_VARARGS, "Connect to vicon"},
      {"disconnect", pyvicon_disconnect, METH_NOARGS, "Disconnect from vicon"},
      {"isconnected", pyvicon_isconnected, METH_NOARGS, "Connection status"},
      {"subjectcount", pyvicon_subjectcount, METH_NOARGS, "Get a count of subjects"},
+     {"subjectname", pyvicon_subjectname, METH_VARARGS, "Get a subject name, given an index"},
+     {"subjects", pyvicon_subjects, METH_NOARGS, "Get a list of all subjects"},
+     {"globalrotation", pyvicon_globalrotation, METH_VARARGS, "get global rotation of a subject"},
+     {"globaltraslation", pyvicon_globaltranslation, METH_VARARGS, "get global translation of a subject"},
      {NULL, NULL, 0, NULL},
 };
 
