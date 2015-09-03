@@ -47,7 +47,7 @@ static PyObject* pyvicon_subjectname(PyObject* self, PyObject* args) {
     Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0);
     unsigned int index;
     
-    if (!PyArg_ParseTuple(args, "I", index))
+    if (!PyArg_ParseTuple(args, "I", &index))
         return NULL;
     
     //cast from the silly vicon string type
@@ -118,13 +118,13 @@ static PyObject* pyvicon_markercount(PyObject* self, PyObject* args) {
 static PyMethodDef ModuleMethods[] = {
      {"connect", pyvicon_connect, METH_VARARGS, "Connect to vicon"},
      {"disconnect", pyvicon_disconnect, METH_NOARGS, "Disconnect from vicon"},
-     {"isconnected", pyvicon_isconnected, METH_NOARGS, "Connection status"},
-     {"subjectcount", pyvicon_subjectcount, METH_NOARGS, "Get a count of subjects"},
-     {"subjectname", pyvicon_subjectname, METH_VARARGS, "Get a subject name, given an index"},
+     {"isConnected", pyvicon_isconnected, METH_NOARGS, "Connection status"},
+     {"subjectCount", pyvicon_subjectcount, METH_NOARGS, "Get a count of subjects"},
+     {"subjectName", pyvicon_subjectname, METH_VARARGS, "Get a subject name, given an index"},
      {"subjects", pyvicon_subjects, METH_NOARGS, "Get a list of all subjects"},
-     {"globalrotation", pyvicon_globalrotation, METH_VARARGS, "get global rotation of a subject"},
-     {"globaltraslation", pyvicon_globaltranslation, METH_VARARGS, "get global translation of a subject"},
-     {"markercount", pyvicon_markercount, METH_VARARGS, "get number of visible markers of a subject"},
+     {"globalRotation", pyvicon_globalrotation, METH_VARARGS, "get global rotation of a subject"},
+     {"globalTraslation", pyvicon_globaltranslation, METH_VARARGS, "get global translation of a subject"},
+     {"markerCount", pyvicon_markercount, METH_VARARGS, "get number of visible markers of a subject"},
      {NULL, NULL, 0, NULL},
 };
 
