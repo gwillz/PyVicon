@@ -1,6 +1,11 @@
+
 from distutils.core import setup, Extension
+ 
+module1 = Extension('pyvicon', 
+                sources=['vicon_python.cpp'], 
+                libraries=['ViconDataStreamSDK_CPP'])
 
-# the c++ extension module
-extension_mod = Extension("hello", ["vicon_python.cpp"])
-
-setup(name = "hello", ext_modules=[extension_mod])
+setup (name = 'PyVicon',
+        version = '1.0',
+        description = 'Python bindings to the ViconDataStream SDK',
+        ext_modules = [module1])

@@ -1,9 +1,15 @@
 
 # vicon_client.py
 
-import hello as pyvicon
 
-print pyvicon.hello("")
+import pyvicon
+
+print pyvicon.isconnected()
+#pyvicon.connect("192.168.10.1:801")
+
+
+"""
+#print pyvicon.hello("")
 
 class PyVicon:
     
@@ -19,3 +25,4 @@ class PyVicon:
     
     
     
+"""
