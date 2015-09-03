@@ -59,9 +59,11 @@ static PyObject* pyvicon_subjectname(PyObject* self, PyObject* args) {
 static PyObject* pyvicon_subjects(PyObject* self, PyObject* args) {
     Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0);
     
+    //get number of subjects
     const unsigned int sub_count = client->GetSubjectCount().SubjectCount;
     const char** subjects = new const char*[sub_count];
     
+    //collect subject names into the array
     for (unsigned int i=0; i<sub_count; ++i)
         subjects[i] = ((std::string)client->GetSubjectName(i).SubjectName).c_str();
     
@@ -99,6 +101,19 @@ static PyObject* pyvicon_globaltranslation(PyObject* self, PyObject* args) {
     return Py_BuildValue("(items)", out.Translation);
 }
 
+static PyObject* pyvicon_markercount(PyObject* self, PyObject* args) {
+    Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0);
+    char* name;
+    
+    if (!PyArg_ParseTuple(args, "s", &name))
+        return NULL;
+    
+    Output_GetMarkerCount out = client->GetMarkerCount(name);
+    //error checking here
+    
+    return Py_BuildValue("I", out.MarkerCount);
+}
+
 //declare the accessible functions
 static PyMethodDef ModuleMethods[] = {
      {"connect", pyvicon_connect, METH_VARARGS, "Connect to vicon"},
@@ -109,6 +124,7 @@ static PyMethodDef ModuleMethods[] = {
      {"subjects", pyvicon_subjects, METH_NOARGS, "Get a list of all subjects"},
      {"globalrotation", pyvicon_globalrotation, METH_VARARGS, "get global rotation of a subject"},
      {"globaltraslation", pyvicon_globaltranslation, METH_VARARGS, "get global translation of a subject"},
+     {"markercount", pyvicon_markercount, METH_VARARGS, "get number of visible markers of a subject"},
      {NULL, NULL, 0, NULL},
 };
 
