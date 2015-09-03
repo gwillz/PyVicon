@@ -1,10 +1,11 @@
 #include <Python.h>
 #include <string>
-#include <vector>
 #include "Client.h"
 
 using namespace ViconDataStreamSDK;
 using namespace CPP;
+
+//--------------  Connect/disconnect/isConnected functions -------------
 
 static PyObject* pyvicon_connect(PyObject* self, PyObject* args) {
     Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0); 
@@ -14,10 +15,16 @@ static PyObject* pyvicon_connect(PyObject* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "s", &input))
         return NULL;
     
-    // run connect if not connected, error handling..?
-    if (!client->IsConnected().Connected)
-        client->Connect(input);
-    return NULL;
+    // return true if already connected
+    if (client->IsConnected().Connected)
+        return Py_True;
+    
+    // connect, ignore most results
+    Output_Connect out = client->Connect(input);
+    if (out.Result == Result::Success)
+        return Py_True; // they can figure out the rest
+    
+    return Py_False;
 }
 
 static PyObject* pyvicon_disconnect(PyObject* self, PyObject* args) {
@@ -35,6 +42,31 @@ static PyObject* pyvicon_isconnected(PyObject* self, PyObject* args) {
     // status, as pybool
     return client->IsConnected().Connected ? Py_True : Py_False;
 }
+
+//------------------------- utility functions ------------------------
+
+static PyObject* pyvicon_version(PyObject* self, PyObject* args) {
+    Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0);
+    
+    Output_GetVersion out = client->GetVersion();
+    unsigned int version[3] = {out.Major, out.Minor, out.Point};
+    
+    return Py_BuildValue("(items)", version);
+}
+
+static PyObject* pyvicon_enablesegmentdata(PyObject* self, PyObject* args) {
+    Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0);
+    
+    return NULL; //STUB
+}
+
+static PyObject* pyvicon_setstreammode(PyObject* self, PyObject* args) {
+    Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0);
+    
+    return NULL; //STUB
+}
+
+//------------------------ subject getters ----------------------------
 
 static PyObject* pyvicon_subjectcount(PyObject* self, PyObject* args) {
     Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0);
@@ -71,6 +103,8 @@ static PyObject* pyvicon_subjects(PyObject* self, PyObject* args) {
     return Py_BuildValue("[items]", subjects);
 }
 
+//--------------------- rotation/translation getters ----------------------
+
 static PyObject* pyvicon_globalrotation(PyObject* self, PyObject* args) {
     Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0);
     char* name;
@@ -101,6 +135,20 @@ static PyObject* pyvicon_globaltranslation(PyObject* self, PyObject* args) {
     return Py_BuildValue("(items)", out.Translation);
 }
 
+//------------------------ marker, frame, other --------------------------
+
+static PyObject* pyvicon_frame(PyObject* self, PyObject* args) {
+    Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0);
+    
+    return NULL; //STUB
+}
+
+static PyObject* pyvicon_framenumber(PyObject* self, PyObject* args) {
+    Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0);
+    
+    return NULL; //STUB
+}
+
 static PyObject* pyvicon_markercount(PyObject* self, PyObject* args) {
     Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0);
     char* name;
@@ -114,6 +162,8 @@ static PyObject* pyvicon_markercount(PyObject* self, PyObject* args) {
     return Py_BuildValue("I", out.MarkerCount);
 }
 
+//------------------------- aaaaand the rest ----------------------------
+
 //declare the accessible functions
 static PyMethodDef ModuleMethods[] = {
      {"connect", pyvicon_connect, METH_VARARGS, "Connect to vicon"},
@@ -122,13 +172,17 @@ static PyMethodDef ModuleMethods[] = {
      {"subjectCount", pyvicon_subjectcount, METH_NOARGS, "Get a count of subjects"},
      {"subjectName", pyvicon_subjectname, METH_VARARGS, "Get a subject name, given an index"},
      {"subjects", pyvicon_subjects, METH_NOARGS, "Get a list of all subjects"},
-     {"globalRotation", pyvicon_globalrotation, METH_VARARGS, "get global rotation of a subject"},
-     {"globalTraslation", pyvicon_globaltranslation, METH_VARARGS, "get global translation of a subject"},
-     {"markerCount", pyvicon_markercount, METH_VARARGS, "get number of visible markers of a subject"},
+     {"globalRotation", pyvicon_globalrotation, METH_VARARGS, "Get global rotation of a subject"},
+     {"globalTraslation", pyvicon_globaltranslation, METH_VARARGS, "Get global translation of a subject"},
+     {"markerCount", pyvicon_markercount, METH_VARARGS, "Get number of visible markers of a subject"},
+     {"frame", pyvicon_frame, METH_NOARGS, "I don't know, a status thing?"},
+     {"frameNumber", pyvicon_framenumber, METH_NOARGS, "Current frame number"},
+     {"setStreamMode", pyvicon_setstreammode, METH_VARARGS, "Stream mode: Pull, PreFetch, Push"},
+     {"enableSegmentData", pyvicon_enablesegmentdata, METH_NOARGS, "Enables segment data. Just always use it, I guess."},
+     {"version", pyvicon_version, METH_NOARGS, "Vicon system version"},
      {NULL, NULL, 0, NULL},
 };
 
-//DL_EXPORT(void) initpyvicon(void) {
 PyMODINIT_FUNC initpyvicon(void) {
     //create the module
     PyObject* m;
