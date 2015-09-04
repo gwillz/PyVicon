@@ -1,3 +1,11 @@
+#!python
+# 
+# PyVicon class implementation
+# 2015-09-05
+# Gwilyn Saunders
+# 
+# Wraps the static functions made in the .cpp into a Python class object.
+# 
 
 import pyvicon
 

@@ -2,7 +2,7 @@
 from distutils.core import setup, Extension
  
 module1 = Extension('pyvicon', 
-                sources=['vicon_python.cpp'], 
+                sources=['pyvicon_class.cpp'], 
                 libraries=['ViconDataStreamSDK_CPP'])
 
 setup (name = 'PyVicon',
