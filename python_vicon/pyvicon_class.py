@@ -16,7 +16,13 @@ class PyVicon:
     
     def __init__(self):
         self._c = pyvicon.new_client()
-        
+    
+    def __del__(self):
+        # explicitly deleting probably does nothing
+        # I don't know how to clean up a pyCapsule
+        # assume it's automatic..?
+        del self._c
+    
     def connect(self, ip, port):
         return pyvicon.connect(self._c, "{}:{}".format(ip, port))
     
@@ -31,6 +37,9 @@ class PyVicon:
     
     def subjectName(self, index):
         return pyvicon.subjectName(self._c, index)
+    
+    def subjects(self):
+        return pyvicon.subjects(self._c)
     
     def rotation(self, name):
         return pyvicon.globalRotation(self._c, name)

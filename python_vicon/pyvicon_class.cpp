@@ -8,6 +8,7 @@ using namespace CPP;
 static PyObject* ViconError;
 
 static PyObject* pyvicon_newclient(PyObject* self, PyObject* args) {
+    //create the client, wrap it, return it
     return PyCapsule_New(new Client(), NULL, NULL);
 }
 
@@ -336,8 +337,6 @@ PyMODINIT_FUNC initpyvicon(void) {
     //create the module
     PyObject* m;
     m = Py_InitModule("pyvicon", ModuleMethods);
-    
-    //PyModule_AddObject(m, "client", pyclient);
     
     //create+add ViconError
     ViconError = PyErr_NewException("pyvicon.error", NULL, NULL);
