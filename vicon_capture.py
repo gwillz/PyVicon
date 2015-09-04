@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.10.23
+# version 0.10.24
 #
 # Retrieves Vicon data via PyVicon
 # Includes syncronized timestamp data via a R232 COM port.
@@ -14,7 +14,8 @@
 from eagleeye import Sleeper, EasyConfig, EasyArgs
 from datetime import datetime
 from serial import Serial
-import csv, sys, os, pyvicon
+import csv, sys, os
+from python_vicon import PyVicon
 
 def main(sysargs):
     # set arguments
@@ -44,13 +45,16 @@ def main(sysargs):
         print "Not listening to serial"
     
     # open Vicon connection
-    pyvicon.connect("{}:{}".format(cfg.ip_address, cfg.port))
+    print "Connecting to Vicon..."
+    client = PyVicon()
+    client.connect(cfg.ip_address, cfg.port)
     
-    if not pyvicon.isConnected():
-        print "Failed to connect to Vicon!\n->", cfg.ip_address, cfg.port
+    if not client.isConnected():
+        print "Failed to connect to Vicon! {}:{}".format(
+                                            cfg.ip_address, cfg.port)
         return 1
     
-    subjects = pyvicon.subjects()
+    subjects = client.subjects()
     max_all = len(subjects) * 7 # seven items of data per object
     
     # print status
@@ -88,8 +92,8 @@ def main(sysargs):
                 serial.setRTS(0)
         
         for s in subjects:
-            rot = pyvicon.globalRotation(s)
-            trans = pyvicon.globalTranslation(s)
+            rot = client.globalRotation(s)
+            trans = client.globalTranslation(s)
             csvwriters[sub].writerow([sleeper.getStamp(), flash] + rot + trans)
         
         # sleep until next timestamp
@@ -99,8 +103,8 @@ def main(sysargs):
         
     # clean up
     for f in csvfiles: f.close()
-    pyvicon.disconnect()
-        
+    client.disconnect()
+    
     print "\nComplete."
     return 0
 
