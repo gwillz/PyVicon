@@ -5,6 +5,8 @@
 using namespace ViconDataStreamSDK;
 using namespace CPP;
 
+static PyObject* ViconError;
+
 //--------------  Connect/disconnect/isConnected functions -------------
 
 static PyObject* pyvicon_connect(PyObject* self, PyObject* args) {
@@ -15,9 +17,12 @@ static PyObject* pyvicon_connect(PyObject* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "s", &input))
         return NULL;
     
-    // return true if already connected
-    if (client->IsConnected().Connected)
-        return Py_True;
+    // throw and error if already connected
+    // although this probably comes out in the Result..
+    if (client->IsConnected().Connected) {
+        PyErr_SetString(ViconError, "connect() PyVicon already connected");
+        return NULL;
+    }
     
     // connect, ignore most results
     Output_Connect out = client->Connect(input);
@@ -30,10 +35,15 @@ static PyObject* pyvicon_connect(PyObject* self, PyObject* args) {
 static PyObject* pyvicon_disconnect(PyObject* self, PyObject* args) {
     Client* client = (Client*)PyCapsule_Import("pyvicon.client", 0);
     
-    //disconnect - if connected
-    if (client->IsConnected().Connected)
-        client->Disconnect();
-    return NULL;
+    //raise errors
+    if (client->IsConnected().Connected) {
+        PyErr_SetString(ViconError, "disconnect() PyVicon already connected");
+        return NULL;
+    }
+    
+    //run disconnect, return none
+    client->Disconnect();
+    return Py_None;
 }
 
 static PyObject* pyvicon_isconnected(PyObject* self, PyObject* args) {
@@ -51,7 +61,7 @@ static PyObject* pyvicon_version(PyObject* self, PyObject* args) {
     Output_GetVersion out = client->GetVersion();
     unsigned int version[3] = {out.Major, out.Minor, out.Point};
     
-    return Py_BuildValue("(items)", version);
+    return Py_BuildValue("(I,I,I)", version);
 }
 
 static PyObject* pyvicon_enablesegmentdata(PyObject* self, PyObject* args) {
@@ -72,8 +82,10 @@ static PyObject* pyvicon_setstreammode(PyObject* self, PyObject* args) {
     //parse the argument
     if (!PyArg_ParseTuple(args, "i", &input))
         return NULL;
-    if (input < 0 && input > 2) 
-        return Py_False;
+    if (input < 0 && input > 2) {
+        PyErr_SetString(PyExc_TypeError, "setStreamMode() takes ints (0, 1, 2)");
+        return NULL;
+    }
     
     //convert to the enum
     switch (input) {
@@ -105,8 +117,15 @@ static PyObject* pyvicon_subjectname(PyObject* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "I", &index))
         return NULL;
     
+    Output_GetSubjectName out = client->GetSubjectName(index);
+    
+    if (out.Result == Result::InvalidIndex) {
+        PyErr_SetString(ViconError, "subjectName() Invalid Index");
+        return NULL;
+    }
+    
     //cast from the silly vicon string type
-    std::string sub_name = (std::string)client->GetSubjectName(index).SubjectName;
+    std::string sub_name = (std::string)out.SubjectName;
     return Py_BuildValue("s", sub_name.c_str());
 }
 
@@ -115,13 +134,14 @@ static PyObject* pyvicon_subjects(PyObject* self, PyObject* args) {
     
     //get number of subjects
     const unsigned int sub_count = client->GetSubjectCount().SubjectCount;
-    const char** subjects = new const char*[sub_count];
+    PyObject* subjects = PyList_New(0);
     
-    //collect subject names into the array
-    for (unsigned int i=0; i<sub_count; ++i)
-        subjects[i] = ((std::string)client->GetSubjectName(i).SubjectName).c_str();
-    
-    return Py_BuildValue("[items]", subjects);
+    //collect subject names into the list (it's expandable!)
+    for (unsigned int i=0; i<sub_count; i++) {
+        std::string sub = (std::string)client->GetSubjectName(i).SubjectName;
+        PyList_Append(subjects, Py_BuildValue("s", sub.c_str()));
+    }
+    return subjects;
 }
 
 //--------------------- rotation/translation getters ----------------------
@@ -133,11 +153,29 @@ static PyObject* pyvicon_globalrotation(PyObject* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "s", &name))
         return NULL;
     
-    Output_GetSegmentGlobalRotationHelical out = client->GetSegmentGlobalRotationHelical(name, name);
-    //TODO: error checking with out.Result?
+    //check for segment data
+    if (client->IsSegmentDataEnabled().Enabled) {
+        PyErr_SetString(ViconError, "globalRotation() SegmentData not enabled");
+        return NULL;
+    }
     
-    //we can just pass the rotation array, let python do the rest
-    return Py_BuildValue("(items)", out.Rotation);
+    Output_GetSegmentGlobalRotationHelical out = client->GetSegmentGlobalRotationHelical(name, name);
+    switch (out.Result) {
+        case Result::Success:
+            break; //keep going!!
+        case Result::InvalidSegmentName:
+            PyErr_SetString(ViconError, "globalRotation() Invalid Segment Name");
+            return NULL;
+        case Result::InvalidSubjectName:
+            PyErr_SetString(ViconError, "globalRotation() Invalid Subject Name");
+            return NULL;
+        default:
+            PyErr_SetString(ViconError, "globalRotation() Unknown Error - sorry!");
+            return NULL;
+    }
+    
+    //let python do the rest, just know it's a set of 3 doubles
+    return Py_BuildValue("(d,d,d)", out.Rotation);
 }
 
 static PyObject* pyvicon_globaltranslation(PyObject* self, PyObject* args) {
@@ -147,10 +185,28 @@ static PyObject* pyvicon_globaltranslation(PyObject* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "s", &name))
         return NULL;
     
-    Output_GetSegmentGlobalTranslation out = client->GetSegmentGlobalTranslation(name, name);
-    //TODO: error checking?
+    //check for segment data
+    if (client->IsSegmentDataEnabled().Enabled) {
+        PyErr_SetString(ViconError, "globalTranslation() SegmentData not enabled");
+        return NULL;
+    }
     
-    return Py_BuildValue("(items)", out.Translation);
+    Output_GetSegmentGlobalTranslation out = client->GetSegmentGlobalTranslation(name, name);
+    switch (out.Result) {
+        case Result::Success:
+            break; //keep going!!
+        case Result::InvalidSegmentName:
+            PyErr_SetString(ViconError, "globalTranslation() Invalid Segment Name");
+            return NULL;
+        case Result::InvalidSubjectName:
+            PyErr_SetString(ViconError, "globalTranslation() Invalid Subject Name");
+            return NULL;
+        default:
+            PyErr_SetString(ViconError, "globalTranslation() Unknown Error - sorry!");
+            return NULL;
+    }
+    
+    return Py_BuildValue("(d,d,d)", out.Translation);
 }
 
 //------------------------ marker, frame, other --------------------------
@@ -172,8 +228,13 @@ static PyObject* pyvicon_markercount(PyObject* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "s", &name))
         return NULL;
     
-    Output_GetMarkerCount out = client->GetMarkerCount(name);
-    return Py_BuildValue("I", out.MarkerCount);
+    //check for marker data
+    if (client->IsMarkerDataEnabled().Enabled) {
+        PyErr_SetString(ViconError, "markerCount() MarkerData not enabled");
+        return NULL;
+    }
+    
+    return Py_BuildValue("I", client->GetMarkerCount(name).MarkerCount);
 }
 
 //------------------------- aaaaand the rest ----------------------------
@@ -207,6 +268,11 @@ PyMODINIT_FUNC initpyvicon(void) {
     Client* vicon_client = new Client();
     PyObject* pyclient = PyCapsule_New(vicon_client, "pyvicon.client", NULL);
     PyModule_AddObject(m, "client", pyclient);
+    
+    //create+add ViconError
+    ViconError = PyErr_NewException("pyvicon.error", NULL, NULL);
+    Py_INCREF(ViconError);
+    PyModule_AddObject(m, "error", ViconError);
     
     //add StreamMode enum, not that we use anything but clientpull
     PyObject* sm1 = Py_BuildValue("i", 0);
