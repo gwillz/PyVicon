@@ -1,6 +1,7 @@
 #!python
-# 
 # PyVicon class implementation
+# Written for the EagleEye project at the University of South Australia
+#
 # 2015-09-05
 # Gwilyn Saunders
 # 
@@ -16,6 +17,7 @@ class PyVicon:
     
     def __init__(self):
         self._c = pyvicon.new_client()
+        self.__version__ = ".".join(pyvicon.version(self._c))
     
     def __del__(self):
         # explicitly deleting probably does nothing
@@ -24,7 +26,12 @@ class PyVicon:
         del self._c
     
     def connect(self, ip, port):
-        return pyvicon.connect(self._c, "{}:{}".format(ip, port))
+        stat = pyvicon.connect(self._c, "{}:{}".format(ip, port))
+        if stat:
+            pyvicon.enableSegmentData(self._c)
+            pyvicon.enableMarkerData(self._c)
+            pyvicon.setStreamMode(self.SM_ClientPull)
+        return stat
     
     def disconnect(self):
         return pyvicon.disconnect(self._c)
@@ -62,12 +69,10 @@ class PyVicon:
     def enableMarkerData(self):
         return pyvicon.enableMarkerData(self._c)
     
-    def version(self):
-        return pyvicon.version(self._c)
-    
 
 if __name__ == "__main__":
     client = PyVicon()
+    print client.__version__
     print client.isConnected()
     print client.connect("192.168.10.1", 801)
     print client.isConnected()

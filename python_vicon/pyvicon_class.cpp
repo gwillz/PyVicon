@@ -1,3 +1,13 @@
+// 
+// Vicon python bindings
+// Written for the EagleEye project at the University of South Australia
+// 
+// 2015-09-05
+// Gwilyn Saunders
+//
+// Exposes a subset of the C++ Client class as static Python functions.
+// 
+
 #include <Python.h>
 #include <string>
 #include "Client.h"
@@ -79,11 +89,9 @@ static PyObject* pyvicon_version(PyObject* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "O", &capsule)) return NULL;
     Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
     
-    //get
+    //get, return
     Output_GetVersion out = client->GetVersion();
-    unsigned int version[3] = {out.Major, out.Minor, out.Point};
-    
-    return Py_BuildValue("(I,I,I)", version);
+    return Py_BuildValue("III", out.Major, out.Minor, out.Point);
 }
 
 static PyObject* pyvicon_enablesegmentdata(PyObject* self, PyObject* args) {
@@ -228,7 +236,7 @@ static PyObject* pyvicon_globalrotation(PyObject* self, PyObject* args) {
     }
     
     //let python do the rest, just know it's a set of 3 doubles
-    return Py_BuildValue("(d,d,d)", out.Rotation);
+    return Py_BuildValue("ddd", out.Rotation[0], out.Rotation[1], out.Rotation[2]);
 }
 
 static PyObject* pyvicon_globaltranslation(PyObject* self, PyObject* args) {
@@ -263,7 +271,7 @@ static PyObject* pyvicon_globaltranslation(PyObject* self, PyObject* args) {
     }
     
     //magic, isn't it?
-    return Py_BuildValue("(d,d,d)", out.Translation);
+    return Py_BuildValue("ddd", out.Translation[0], out.Translation[1], out.Translation[2]);
 }
 
 //------------------------ marker, frame, other --------------------------
