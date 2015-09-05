@@ -5,7 +5,7 @@
 // 2015-09-05
 // Gwilyn Saunders
 //
-// Exposes a subset of the C++ Client class as static Python functions.
+// Exposes a subset of the C++ Client class as Python functions.
 // 
 
 #include <Python.h>
@@ -22,65 +22,6 @@ static PyObject* pyvicon_newclient(PyObject* self, PyObject* args) {
     return PyCapsule_New(new Client(), NULL, NULL);
 }
 
-//--------------  Connect/disconnect/isConnected functions -------------
-
-static PyObject* pyvicon_connect(PyObject* self, PyObject* args) {
-    //inputs
-    PyObject* capsule;
-    char* address;
-    
-    //parse
-    if (!PyArg_ParseTuple(args, "Os", &capsule, &address)) return NULL;
-    Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
-    
-    // throw and error if already connected
-    // although this probably comes out in the Result..
-    if (client->IsConnected().Connected) {
-        PyErr_SetString(ViconError, "connect() PyVicon already connected");
-        return NULL;
-    }
-    
-    // connect, ignore most results
-    Output_Connect out = client->Connect(address);
-    if (out.Result == Result::Success)
-        return Py_True; // they can figure out the rest
-    
-    return Py_False;
-}
-
-static PyObject* pyvicon_disconnect(PyObject* self, PyObject* args) {
-    //inputs
-    PyObject* capsule;
-    
-    //parse
-    if (!PyArg_ParseTuple(args, "O", &capsule)) return NULL;
-    Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
-    
-    //raise errors
-    if (client->IsConnected().Connected) {
-        PyErr_SetString(ViconError, "disconnect() PyVicon already connected");
-        return NULL;
-    }
-    
-    //run disconnect, return none
-    client->Disconnect();
-    return Py_None;
-}
-
-static PyObject* pyvicon_isconnected(PyObject* self, PyObject* args) {
-    //inputs
-    PyObject* capsule;
-    
-    //parse
-    if (!PyArg_ParseTuple(args, "O", &capsule)) return NULL;
-    Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
-    
-    // status, as pybool
-    return client->IsConnected().Connected ? Py_True : Py_False;
-}
-
-//------------------------- utility functions ------------------------
-
 static PyObject* pyvicon_version(PyObject* self, PyObject* args) {
     //inputs
     PyObject* capsule;
@@ -94,7 +35,75 @@ static PyObject* pyvicon_version(PyObject* self, PyObject* args) {
     return Py_BuildValue("III", out.Major, out.Minor, out.Point);
 }
 
-static PyObject* pyvicon_enablesegmentdata(PyObject* self, PyObject* args) {
+// returns true if there is an exception to raise
+static bool handleError(Result::Enum result) {
+    switch (result) {
+        case Result::Success:
+            return false; //keep going!!
+        case Result::ClientAlreadyConnected:
+            PyErr_SetString(ViconError, "PyVicon: Client already connected");
+            return true;
+        case Result::NotConnected:
+            PyErr_SetString(ViconError, "PyVicon: Client not connected");
+            return true;
+        case Result::ClientConnectionFailed:
+            PyErr_SetString(ViconError, "PyVicon: Client connected failed");
+            return true;
+        case Result::InvalidHostName:
+            PyErr_SetString(ViconError, "PyVicon: Invalid host name");
+            return true;
+        case Result::InvalidIndex:
+            PyErr_SetString(ViconError, "PyVicon: Invalid index");
+            return true;
+        case Result::InvalidSegmentName:
+            PyErr_SetString(ViconError, "PyVicon: Invalid segment name");
+            return true;
+        case Result::InvalidSubjectName:
+            PyErr_SetString(ViconError, "PyVicon: Invalid subject name");
+            return true;
+        case Result::NoFrame:
+            PyErr_SetString(ViconError, "PyVicon No frame - hint: if client.frame(): ... ");
+            return true;
+        default:
+            PyErr_SetString(ViconError, "PyVicon: Unknown error - sorry!");
+            return true;
+    }
+}
+
+//--------------  Connect/disconnect/isConnected functions -------------
+
+static PyObject* pyvicon_connect(PyObject* self, PyObject* args) {
+    //inputs
+    PyObject* capsule;
+    char* address;
+    
+    //parse
+    if (!PyArg_ParseTuple(args, "Os", &capsule, &address)) return NULL;
+    Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
+    
+    //thread waits here
+    Output_Connect out = client->Connect(address);
+    
+    //true if connected, false if failed
+    switch (out.Result) {
+        case Result::Success:
+            return Py_True;
+        case Result::ClientAlreadyConnected:
+            return Py_True;
+        case Result::ClientConnectionFailed:
+            return Py_False;
+        default:
+            break;
+    }
+    
+    //raise errors for everything else
+    if (handleError(out.Result)) return NULL;
+    
+    //catch the rest
+    return Py_False;
+}
+
+static PyObject* pyvicon_disconnect(PyObject* self, PyObject* args) {
     //inputs
     PyObject* capsule;
     
@@ -102,20 +111,67 @@ static PyObject* pyvicon_enablesegmentdata(PyObject* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "O", &capsule)) return NULL;
     Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
     
-    //get
+    //dumb disconnect, who needs errors for this?
+    client->Disconnect();
+    return Py_None;
+}
+
+static PyObject* pyvicon_isconnected(PyObject* self, PyObject* args) {
+    //inputs
+    PyObject* capsule;
+    
+    //parse
+    if (!PyArg_ParseTuple(args, "O", &capsule)) return NULL;
+    Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
+    
+    //get, return
+    return client->IsConnected().Connected ? Py_True : Py_False;
+}
+
+//------------------------- settings functions ------------------------
+//it's all a bit repetitive after here - compressed for convenience
+
+static PyObject* pyvicon_enablesegmentdata(PyObject* self, PyObject* args) {
+    PyObject* capsule;
+    if (!PyArg_ParseTuple(args, "O", &capsule)) return NULL;
+    Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
     return (client->EnableSegmentData().Result == Result::Success) ? Py_True : Py_False;
 }
 
-static PyObject* pyvicon_enablemarkerdata(PyObject* self, PyObject* args) {
-    //inputs
+
+static PyObject* pyvicon_disablesegmentdata(PyObject* self, PyObject* args) {
     PyObject* capsule;
-    
-    //parse
     if (!PyArg_ParseTuple(args, "O", &capsule)) return NULL;
     Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
-    
-    //get
+    return (client->DisableSegmentData().Result == Result::Success) ? Py_True : Py_False;
+}
+
+static PyObject* pyvicon_issegmentdataenabled(PyObject* self, PyObject* args) {
+    PyObject* capsule;
+    if (!PyArg_ParseTuple(args, "O", &capsule)) return NULL;
+    Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
+    return client->IsSegmentDataEnabled().Enabled ? Py_True : Py_False;
+}
+
+static PyObject* pyvicon_enablemarkerdata(PyObject* self, PyObject* args) {
+    PyObject* capsule;
+    if (!PyArg_ParseTuple(args, "O", &capsule)) return NULL;
+    Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
     return (client->EnableMarkerData().Result == Result::Success) ? Py_True : Py_False;
+}
+
+static PyObject* pyvicon_disablemarkerdata(PyObject* self, PyObject* args) {
+    PyObject* capsule;
+    if (!PyArg_ParseTuple(args, "O", &capsule)) return NULL;
+    Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
+    return (client->DisableMarkerData().Result == Result::Success) ? Py_True : Py_False;
+}
+
+static PyObject* pyvicon_ismarkerdataenabled(PyObject* self, PyObject* args) {
+    PyObject* capsule;
+    if (!PyArg_ParseTuple(args, "O", &capsule)) return NULL;
+    Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
+    return client->IsMarkerDataEnabled().Enabled ? Py_True : Py_False;
 }
 
 static PyObject* pyvicon_setstreammode(PyObject* self, PyObject* args) {
@@ -152,13 +208,15 @@ static PyObject* pyvicon_setstreammode(PyObject* self, PyObject* args) {
 //------------------------ subject getters ----------------------------
 
 static PyObject* pyvicon_subjectcount(PyObject* self, PyObject* args) {
-    //inputs
     PyObject* capsule;
-    
     if (!PyArg_ParseTuple(args, "O", &capsule)) return NULL;
     Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
     
-    return Py_BuildValue("I", client->GetSubjectCount().SubjectCount);
+    //get
+    Output_GetSubjectCount out = client->GetSubjectCount();
+    if (handleError(out.Result)) return NULL;
+    
+    return Py_BuildValue("I", out.SubjectCount);
 }
 
 static PyObject* pyvicon_subjectname(PyObject* self, PyObject* args) {
@@ -170,12 +228,9 @@ static PyObject* pyvicon_subjectname(PyObject* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "OI", &capsule, &index)) return NULL;
     Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
     
-    //get and test result
+    //get and handle errors
     Output_GetSubjectName out = client->GetSubjectName(index);
-    if (out.Result == Result::InvalidIndex) {
-        PyErr_SetString(ViconError, "subjectName() Invalid Index");
-        return NULL;
-    }
+    if (handleError(out.Result)) return NULL;
     
     //cast from the silly vicon string type
     std::string sub_name = (std::string)out.SubjectName;
@@ -190,15 +245,24 @@ static PyObject* pyvicon_subjects(PyObject* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "O", &capsule)) return NULL;
     Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
     
-    //get number of subjects
-    const unsigned int sub_count = client->GetSubjectCount().SubjectCount;
-    PyObject* subjects = PyList_New(0);
+    //get number and handle errors
+    Output_GetSubjectCount count_out = client->GetSubjectCount();
+    if (handleError(count_out.Result)) return NULL;
     
-    //collect subject names into the list (it's expandable!)
+    //get count and create py list
+    const unsigned int sub_count = count_out.SubjectCount;
+    PyObject* subjects = PyList_New(sub_count);
+    
+    //collect subject names into the list
     for (unsigned int i=0; i<sub_count; i++) {
-        PyList_Append(subjects, Py_BuildValue("s", 
-                ((std::string) client->GetSubjectName(i).SubjectName).c_str()));
+        Output_GetSubjectName name_out = client->GetSubjectName(i);
+        if (handleError(name_out.Result)) return NULL; //does this mem leak the subjects var?
+        
+        //cast and insert
+        PyList_SetItem(subjects, i, Py_BuildValue("s", ((std::string)name_out.SubjectName).c_str()));
     }
+    
+    //hope to God the list is full
     return subjects;
 }
 
@@ -213,27 +277,9 @@ static PyObject* pyvicon_globalrotation(PyObject* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "Os", &capsule, &name)) return NULL;
     Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
     
-    //check for segment data
-    if (client->IsSegmentDataEnabled().Enabled) {
-        PyErr_SetString(ViconError, "globalRotation() SegmentData not enabled");
-        return NULL;
-    }
-    
     //get data, run error checking
     Output_GetSegmentGlobalRotationHelical out = client->GetSegmentGlobalRotationHelical(name, name);
-    switch (out.Result) {
-        case Result::Success:
-            break; //keep going!!
-        case Result::InvalidSegmentName:
-            PyErr_SetString(ViconError, "globalRotation() Invalid Segment Name");
-            return NULL;
-        case Result::InvalidSubjectName:
-            PyErr_SetString(ViconError, "globalRotation() Invalid Subject Name");
-            return NULL;
-        default:
-            PyErr_SetString(ViconError, "globalRotation() Unknown Error - sorry!");
-            return NULL;
-    }
+    if (handleError(out.Result)) return NULL;
     
     //let python do the rest, just know it's a set of 3 doubles
     return Py_BuildValue("ddd", out.Rotation[0], out.Rotation[1], out.Rotation[2]);
@@ -248,27 +294,9 @@ static PyObject* pyvicon_globaltranslation(PyObject* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "Os", &capsule, &name)) return NULL;
     Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
     
-    //check for segment data
-    if (client->IsSegmentDataEnabled().Enabled) {
-        PyErr_SetString(ViconError, "globalTranslation() SegmentData not enabled");
-        return NULL;
-    }
-    
     //get data, run error checking
     Output_GetSegmentGlobalTranslation out = client->GetSegmentGlobalTranslation(name, name);
-    switch (out.Result) {
-        case Result::Success:
-            break; //keep going!!
-        case Result::InvalidSegmentName:
-            PyErr_SetString(ViconError, "globalTranslation() Invalid Segment Name");
-            return NULL;
-        case Result::InvalidSubjectName:
-            PyErr_SetString(ViconError, "globalTranslation() Invalid Subject Name");
-            return NULL;
-        default:
-            PyErr_SetString(ViconError, "globalTranslation() Unknown Error - sorry!");
-            return NULL;
-    }
+    if (handleError(out.Result)) return NULL;
     
     //magic, isn't it?
     return Py_BuildValue("ddd", out.Translation[0], out.Translation[1], out.Translation[2]);
@@ -277,27 +305,25 @@ static PyObject* pyvicon_globaltranslation(PyObject* self, PyObject* args) {
 //------------------------ marker, frame, other --------------------------
 
 static PyObject* pyvicon_frame(PyObject* self, PyObject* args) {
-    //inputs
     PyObject* capsule;
-    
-    //parse
     if (!PyArg_ParseTuple(args, "O", &capsule)) return NULL;
     Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
-    
     return (client->GetFrame().Result == Result::Success) ? Py_True : Py_False;
 }
 
-static PyObject* pyvicon_framenumber(PyObject* self, PyObject* args) {
-    //inputs
+/*
+// ONLY SUPPRTED IN VICON 1.3+ (UniSA mechlab is on 1.2?)
+static PyObject* pyvicon_framerate(PyObject* self, PyObject* args) {
     PyObject* capsule;
-    
-    //parse
     if (!PyArg_ParseTuple(args, "O", &capsule)) return NULL;
     Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
     
-    //get
-    return Py_BuildValue("I", client->GetFrameNumber().FrameNumber);
+    Output_GetFrameRate out = client->GetFrameRate();
+    if (handleError(out.Result)) return NULL;
+    
+    return Py_BuildValue("d", out.FrameRateHz);
 }
+*/
 
 static PyObject* pyvicon_markercount(PyObject* self, PyObject* args) {
     //inputs
@@ -308,14 +334,11 @@ static PyObject* pyvicon_markercount(PyObject* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "Os", &capsule, &name)) return NULL;
     Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
     
-    //check for marker data
-    if (client->IsMarkerDataEnabled().Enabled) {
-        PyErr_SetString(ViconError, "markerCount() MarkerData not enabled");
-        return NULL;
-    }
+    //get, errors, etc
+    Output_GetMarkerCount out = client->GetMarkerCount(name);
+    if (handleError(out.Result)) return NULL;
     
-    //get
-    return Py_BuildValue("I", client->GetMarkerCount(name).MarkerCount);
+    return Py_BuildValue("I", out.MarkerCount);
 }
 
 //------------------------- aaaaand the rest ----------------------------
@@ -332,12 +355,19 @@ static PyMethodDef ModuleMethods[] = {
      {"globalRotation", pyvicon_globalrotation, METH_VARARGS, "Get global rotation of a subject"},
      {"globalTranslation", pyvicon_globaltranslation, METH_VARARGS, "Get global translation of a subject"},
      {"markerCount", pyvicon_markercount, METH_VARARGS, "Get number of visible markers of a subject"},
-     {"frame", pyvicon_frame, METH_VARARGS, "I don't know, a status thing?"},
-     {"frameNumber", pyvicon_framenumber, METH_VARARGS, "Current frame number"},
+     {"frame", pyvicon_frame, METH_VARARGS, "A status thing, call it before retrieving any data"},
      {"setStreamMode", pyvicon_setstreammode, METH_VARARGS, "Stream mode: Pull, PreFetch, Push"},
      {"enableSegmentData", pyvicon_enablesegmentdata, METH_VARARGS, "Enables segment data. Just always use it, I guess."},
+     {"disableSegmentData", pyvicon_disablesegmentdata, METH_VARARGS, "Opposite of enableSegmentData, right?"},
+     {"hasSegmentData", pyvicon_issegmentdataenabled, METH_VARARGS, "Tests whether SegmentData is enabled."},
      {"enableMarkerData", pyvicon_enablemarkerdata, METH_VARARGS, "Enables marker data. Use this for markerCount."},
+     {"disableMarkerData", pyvicon_disablemarkerdata, METH_VARARGS, "Opposite of enableMarkerData"},
+     {"hasMarkerData", pyvicon_ismarkerdataenabled, METH_VARARGS, "Tests whether MarkerData is enabled."},
      {"version", pyvicon_version, METH_VARARGS, "Vicon system version"},
+     
+     //ONLY SUPPRORTED IN VICON 1.3+
+     //{"frameRate", pyvicon_framerate, METH_VARARGS, "Get the current framerate in hertz as a double"},
+     
      {NULL, NULL, 0, NULL},
 };
 

@@ -16,8 +16,14 @@ class PyVicon:
     SM_ServerPush = 2
     
     def __init__(self):
+        # create client capsule
+        # store version
         self._c = pyvicon.new_client()
-        self.__version__ = ".".join(pyvicon.version(self._c))
+        self.__version_tuple__ = pyvicon.version(self._c)
+        self.__version__ = "{}.{}.{}".format(
+                                self.__version_tuple__[0],
+                                self.__version_tuple__[1],
+                                self.__version_tuple__[2])
     
     def __del__(self):
         # explicitly deleting probably does nothing
@@ -25,9 +31,9 @@ class PyVicon:
         # assume it's automatic..?
         del self._c
     
-    def connect(self, ip, port):
+    def connect(self, ip, port=801, defaults=True):
         stat = pyvicon.connect(self._c, "{}:{}".format(ip, port))
-        if stat:
+        if stat and defaults:
             pyvicon.enableSegmentData(self._c)
             pyvicon.enableMarkerData(self._c)
             pyvicon.setStreamMode(self.SM_ClientPull)
@@ -57,25 +63,39 @@ class PyVicon:
     def frame(self):
         return pyvicon.frame(self._c)
     
-    def frameNumber(self):
-        return pyvicon.frameNumber(self._c)
+    ## ONLY SUPPRTED IN VICON 1.3+
+    #def frameRate(self):
+    #    return pyvicon.frameRate(self._c)
     
     def setStreamMode(self, streamMode):
         return pyvicon.setStreamMode(self._c, streamMode)
     
-    def enableSegmentData(self):
-        return pyvicon.enableSegmentData(self._c)
+    def enableSegmentData(self, b=True):
+        if b: return pyvicon.enableSegmentData(self._c)
+        else: return pyvicon.disableSegmentData(self._c)
     
-    def enableMarkerData(self):
-        return pyvicon.enableMarkerData(self._c)
+    def hasSegmentData(self):
+        return pyvicon.hasSegmentData(self._c)
     
+    def enableMarkerData(self, b=True):
+        if b: return pyvicon.enableMarkerData(self._c)
+        else: return pyvicon.disableMarkerData(self._c)
+    
+    def hasMarkerData(self):
+        return pyvicon.hasMarkerData(self._c)
 
 if __name__ == "__main__":
     client = PyVicon()
     print client.__version__
     print client.isConnected()
+    print client.enableSegmentData()
+    print client.hasSegmentData()
     print client.connect("192.168.10.1", 801)
-    print client.isConnected()
+    #print client.frameRate()
+    if client.isConnected():
+        print client.enableMarkerData()
+        print client.hasMarkerData()
+        print client.isConnected()
     print client.disconnect()
     
     exit(0)
