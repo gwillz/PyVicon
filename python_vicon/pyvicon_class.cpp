@@ -82,7 +82,10 @@ static PyObject* pyvicon_connect(PyObject* self, PyObject* args) {
     Client* client = (Client*)PyCapsule_GetPointer(capsule, NULL);
     
     //thread waits here
-    Output_Connect out = client->Connect(address);
+    Output_Connect out;
+    Py_BEGIN_ALLOW_THREADS
+    out = client->Connect(address);
+    Py_END_ALLOW_THREADS
     
     //true if connected, false if failed
     switch (out.Result) {
