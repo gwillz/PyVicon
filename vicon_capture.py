@@ -3,12 +3,12 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.10.24
+# version 0.11.26
 #
 # Retrieves Vicon data via PyVicon
 # Includes syncronized timestamp data via a R232 COM port.
 #
-# usage: python2 vicon_capture.py {--output <folder> | --time <in minutes> | --config <file>}
+# usage: python2 vicon_capture.py {--output <folder> | --time <in minutes> | --config <file> | --training <file>}
 #
 
 from eagleeye import Sleeper, EasyConfig, EasyArgs
@@ -54,8 +54,33 @@ def main(sysargs):
                                             cfg.ip_address, cfg.port)
         return 1
     
-    subjects = client.subjects()
-    max_all = len(subjects) * 7 # seven items of data per object
+    csvfiles = []
+    csvwriters = {}
+    
+    # determine training or capture mode
+    if args.training:
+        # test target existance
+        client.frame()
+        if not cfg.trainer_target in client.subjects():
+            print "Cannot find:", cfg.trainer_target
+            return 1
+        
+        f = open(args.training, 'wb')
+        csvfiles.append(f)
+        csvwriters[cfg.trainer_target] = csv.writer(f, delimiter=cfg.output_delimiter, quoting=csv.QUOTE_MINIMAL)
+        subjects = [cfg.trainer_target]
+    else:
+        client.frame()
+        subjects = client.subjects()
+        
+        # open CSV files
+        for sub in subjects:
+            path = "{0}_{1}.csv".format(outpath, sub)
+            f = open(path, 'wb')
+            w = csv.writer(f, delimiter=cfg.output_delimiter, quoting=csv.QUOTE_MINIMAL)
+            csvfiles.append(f)
+            csvwriters[sub] = w
+        
     
     # print status
     print ""
@@ -63,19 +88,14 @@ def main(sysargs):
     print "Running for", time, "seconds ({} frames)".format(num_frames)
     print "Flash delay at:", cfg.flash_delay, " ({} seconds)".format(int(cfg.flash_delay / cfg.framerate))
     print "Capturing at", cfg.framerate, "frames per second"
-    print "Saving data into:", output_folder
-    print "Recording these subjects:\n", ", ".join(subjects)
-    print ""
     
-    # open CSV files
-    csvfiles = []
-    csvwriters = {}
-    for sub in subjects:
-        path = "{0}_{1}.csv".format(outpath, sub)
-        f = open(path, 'wb')
-        w = csv.writer(f, delimiter=cfg.output_delimiter, quoting=csv.QUOTE_MINIMAL)
-        csvfiles.append(f)
-        csvwriters[sub] = w
+    if args.training:
+        print "Recording training target:", cfg.trainer_target, "into:", args.training
+    else:
+        print "Saving data into:", output_folder
+        print "Recording these subjects:\n", ", ".join(subjects)
+    
+    print ""
     
     # main loop
     for c in range(0, num_frames):
@@ -91,10 +111,12 @@ def main(sysargs):
             else: 
                 serial.setRTS(0)
         
+        client.frame()
         for s in subjects:
-            rot = client.globalRotation(s)
-            trans = client.globalTranslation(s)
-            csvwriters[sub].writerow([sleeper.getStamp(), flash] + rot + trans)
+            rot = client.rotation(s)
+            trans = client.translation(s)
+            status = client.markerStatus(s)
+            csvwriters[s].writerow([sleeper.getStamp(), flash] + list(rot) + list(trans) + list(status))
         
         # sleep until next timestamp
         sys.stdout.write("{}/{}\r".format(c, num_frames))
