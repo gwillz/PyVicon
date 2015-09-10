@@ -36,7 +36,7 @@ class PyVicon:
         if stat and defaults:
             pyvicon.enableSegmentData(self._c)
             pyvicon.enableMarkerData(self._c)
-            pyvicon.setStreamMode(self.SM_ClientPull)
+            pyvicon.setStreamMode(self._c, self.SM_ClientPull)
         return stat
     
     def disconnect(self):
@@ -66,6 +66,9 @@ class PyVicon:
     ## ONLY SUPPRTED IN VICON 1.3+
     #def frameRate(self):
     #    return pyvicon.frameRate(self._c)
+    
+    def markerStatus(self, name):
+        return pyvicon.markerStatus(self._c, name)
     
     def setStreamMode(self, streamMode):
         return pyvicon.setStreamMode(self._c, streamMode)
