@@ -113,10 +113,11 @@ def main(sysargs):
         
         client.frame()
         for s in subjects:
-            rot = client.rotation(s)
-            trans = client.translation(s)
-            status = client.markerStatus(s)
-            csvwriters[s].writerow([sleeper.getStamp(), flash] + list(rot) + list(trans) + list(status))
+            csvwriters[s].writerow(
+                [sleeper.getStamp(), flash] + 
+                list(client.translation(s)) + 
+                list(client.rotation(s)) + 
+                list(client.markerStatus(s)))
         
         # sleep until next timestamp
         sys.stdout.write("{}/{}\r".format(c, num_frames))
