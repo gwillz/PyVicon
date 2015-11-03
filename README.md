@@ -101,7 +101,7 @@ contains and the corresponding defaults.
 | run_serial        | Whether to activate the flash                             | True           |
 | trainer_target    | Which target to look for when training                    | EEWand         |
 
-### 3.3 Raw CSV Data Output
+### 3.4 Raw CSV Data Output
 This is object data represented in the Vicon World Coordinates. Each file
 contains data for a single object captured. Containing positional, rotational,
 sychronisation and marker data.
@@ -130,4 +130,41 @@ __Rotation__
 The rotational X, Y, Z is a
 [Euler Vector](https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation),
 not to be mistaken with Euler Angles - pitch, yaw, roll.
+
+
+## 4 Re-compiling PyVicon
+This software has been tested at the Mechatronic Lab in the Mawson Lakes 
+University of South Australia campus. The lab runs Vicon Tracker (Rigid bodies) v1.2 32bit. 
+
+__Visual Studio versions__
+
+To recompile, the system needs to have Visual Studio installed. The python 
+setuptools only read the `VS90COMNTOOLS` environment variable, some tweaking is 
+required if that is not your VS version.
+
+- No SET required (for VS2008)
+- `SET VS90COMNTOOLS=%VS100COMNTOOLS%` (for VS2010)
+- `SET VS90COMNTOOLS=%VS110COMNTOOLS%` (for VS2012)
+- `SET VS90COMNTOOLS=%VS120COMNTOOLS%` (for VS2013)
+
+__Vicon DataStream SDK__
+
+Download the Vicon DataStream SDK from [here](http://www.vicon.com/products/software/datastream-sdk).
+If this doesn't match your Vicon installation, find the right one with Google or
+hope that your installation includes the SDK.
+Copy all of the SDK files into the `python_vicon` folder.
+
+__Compiling__
+
+- open a terminal in the `python_vicon` directory
+- run these: (supposedly they help?)
+
+     ```sh
+        SET MSSDK=1
+        SET DISTUTILS_USE_SDK=1
+    ```
+- execute the setup.py `$ python setup.py build`
+- check for errors in the output (good luck)
+- open the new `build` folder, look for a `lib.win32` or `lib.win-amd64`
+- copy the `pyvicon.pyd` back into the root `python_vicon` folder
 
